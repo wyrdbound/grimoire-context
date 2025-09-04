@@ -116,7 +116,7 @@ class TestDictInterface:
 
         assert context1 == context2
         assert context1 != context3
-    
+
     def test_deep_equality(self):
         """Test context equality."""
         context1 = WyrdboundContext({"a": 1, "b": {"1": 1, "2": 2}})

@@ -161,14 +161,14 @@ class WyrdboundContext:
 
     def items(self) -> Iterator[tuple[str, Any]]:
         """Get all key-value pairs from context hierarchy."""
-        return self.chain_view.items()
+        return iter(self.chain_view.items())
 
     def get(self, key: str, default: Any = None) -> Any:
         """Get value with optional default."""
         return self.chain_view.get(key, default)
 
     # Immutable operations
-    def set(self, key: str, value: Any) -> 'WyrdboundContext':
+    def set(self, key: str, value: Any) -> "WyrdboundContext":
         """Return new context with updated value at this hierarchical level.
 
         Args:
@@ -183,7 +183,7 @@ class WyrdboundContext:
             new_data,
             self._parent,
             self._template_resolver,
-            str(uuid4())  # Always generate new ID for modified contexts
+            str(uuid4()),  # Always generate new ID for modified contexts
         )
 
     def discard(self, key: str) -> "WyrdboundContext":
