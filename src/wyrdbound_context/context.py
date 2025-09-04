@@ -9,6 +9,7 @@ from typing import (
     KeysView,
     List,
     Optional,
+    Tuple,
     Union,
     ValuesView,
 )
@@ -50,7 +51,7 @@ class WyrdboundContext:
 
     def __init__(
         self,
-        data: Optional[Union[Dict[str, Any], PMap]] = None,
+        data: Optional[Union[Dict[str, Any], Any]] = None,
         parent: Optional["WyrdboundContext"] = None,
         template_resolver: Optional[TemplateResolver] = None,
         context_id: Optional[str] = None,
@@ -65,7 +66,7 @@ class WyrdboundContext:
         """
         # Immutable data storage
         if data is None:
-            self._data: PMap[str, Any] = pmap({})
+            self._data: Any = pmap({})
         elif isinstance(data, dict):
             self._data = pmap(data)
         else:
@@ -159,7 +160,7 @@ class WyrdboundContext:
         """Get all values from context hierarchy."""
         return self.chain_view.values()
 
-    def items(self) -> Iterator[tuple[str, Any]]:
+    def items(self) -> Iterator[Tuple[str, Any]]:
         """Get all key-value pairs from context hierarchy."""
         return iter(self.chain_view.items())
 

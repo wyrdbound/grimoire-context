@@ -240,7 +240,7 @@ class ContextMerger:
             modified_paths_per_context.append(modified_paths)
 
         # Check for conflicts: paths that conflict with each other
-        all_modified_paths: list[str] = []
+        all_modified_paths: List[str] = []
         conflicted_paths = set()
 
         for modified_paths in modified_paths_per_context:
