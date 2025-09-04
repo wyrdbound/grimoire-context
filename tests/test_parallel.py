@@ -23,7 +23,7 @@ def timing_operation_a(context: WyrdboundContext) -> WyrdboundContext:
     """Operation that records timing to test parallel execution."""
     time.sleep(0.05)  # Initial delay
     result_context = context.set("timing_a", time.time())
-    time.sleep(0.1)   # Work simulation
+    time.sleep(0.1)  # Work simulation
     return result_context
 
 
@@ -31,7 +31,7 @@ def timing_operation_b(context: WyrdboundContext) -> WyrdboundContext:
     """Operation that records timing to test parallel execution."""
     time.sleep(0.05)  # Initial delay
     result_context = context.set("timing_b", time.time())
-    time.sleep(0.1)   # Work simulation
+    time.sleep(0.1)  # Work simulation
     return result_context
 
 
@@ -67,10 +67,12 @@ class TestParallelExecution:
         timing_a = result["timing_a"]
         timing_b = result["timing_b"]
         time_diff = abs(timing_a - timing_b)
-        
+
         # If they ran sequentially, the difference would be ~0.15s (0.05 + 0.1)
         # If they ran in parallel, the difference should be much smaller
-        assert time_diff < 0.05, f"Operations appear to have run sequentially (time diff: {time_diff:.3f}s)"
+        assert time_diff < 0.05, (
+            f"Operations appear to have run sequentially (time diff: {time_diff:.3f}s)"
+        )
 
     def test_execute_parallel_with_conflicts(self):
         """Test parallel execution with conflicting operations."""
