@@ -1,0 +1,18 @@
+# Python bytecode files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Python virtual environments
+.venv/
+.tool-versions
+
+# MacOS system files
+.DS_Store
+
+# Unnecessary files
+*.log
+*.tmp
+*.bak
+*.backup
+WYRDBOUND_CONTEXT_PLAN.md
