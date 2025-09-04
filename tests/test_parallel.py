@@ -19,6 +19,22 @@ def slow_operation_b(context: WyrdboundContext) -> WyrdboundContext:
     return context.set("result_b", "value_b")
 
 
+def timing_operation_a(context: WyrdboundContext) -> WyrdboundContext:
+    """Operation that records timing to test parallel execution."""
+    time.sleep(0.05)  # Initial delay
+    result_context = context.set("timing_a", time.time())
+    time.sleep(0.1)  # Work simulation
+    return result_context
+
+
+def timing_operation_b(context: WyrdboundContext) -> WyrdboundContext:
+    """Operation that records timing to test parallel execution."""
+    time.sleep(0.05)  # Initial delay
+    result_context = context.set("timing_b", time.time())
+    time.sleep(0.1)  # Work simulation
+    return result_context
+
+
 def conflicting_operation(context: WyrdboundContext) -> WyrdboundContext:
     """Operation that conflicts with other operations."""
     return context.set("result_a", "conflicting_value")
@@ -32,19 +48,31 @@ class TestParallelExecution:
         context = WyrdboundContext({"base": "value"})
 
         operations = [slow_operation_a, slow_operation_b]
-
-        # Measure execution time
-        start_time = time.time()
         result = context.execute_parallel(operations)
-        end_time = time.time()
-
-        # Should complete faster than sequential execution
-        assert end_time - start_time < 0.15  # Less than sequential 0.2s
 
         # Results should be merged
         assert result["base"] == "value"  # Original data preserved
         assert result["result_a"] == "value_a"
         assert result["result_b"] == "value_b"
+
+    def test_execute_parallel_timing(self):
+        """Test that operations actually run in parallel by checking timing overlap."""
+        context = WyrdboundContext({"base": "value"})
+
+        operations = [timing_operation_a, timing_operation_b]
+        result = context.execute_parallel(operations)
+
+        # If operations ran in parallel, their recorded times should overlap
+        # (difference should be much less than the sleep duration)
+        timing_a = result["timing_a"]
+        timing_b = result["timing_b"]
+        time_diff = abs(timing_a - timing_b)
+
+        # If they ran sequentially, the difference would be ~0.15s (0.05 + 0.1)
+        # If they ran in parallel, the difference should be much smaller
+        assert time_diff < 0.05, (
+            f"Operations appear to have run sequentially (time diff: {time_diff:.3f}s)"
+        )
 
     def test_execute_parallel_with_conflicts(self):
         """Test parallel execution with conflicting operations."""

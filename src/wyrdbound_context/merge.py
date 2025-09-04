@@ -88,6 +88,7 @@ def _deep_merge_dicts(dict1: Dict[str, Any], dict2: Dict[str, Any]) -> Dict[str,
             result[key] = value
     return result
 
+
 class ContextMerger:
     """Utilities for merging parallel context modifications."""
 
@@ -134,6 +135,7 @@ class ContextMerger:
 
         # Convert back to PMap
         from pyrsistent import pmap
+
         merged_data = pmap(merged_dict)
 
         # Import here to avoid circular imports
@@ -238,7 +240,7 @@ class ContextMerger:
             modified_paths_per_context.append(modified_paths)
 
         # Check for conflicts: paths that conflict with each other
-        all_modified_paths = []
+        all_modified_paths: List[str] = []
         conflicted_paths = set()
 
         for modified_paths in modified_paths_per_context:

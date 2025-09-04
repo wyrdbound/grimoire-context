@@ -323,4 +323,4 @@ The package is built on several key components:
 
 ---
 
-**Made with ❤️ for the Wyrdbound tabletop RPG community**
+**Copyright (c) 2025 The Wyrd One**
