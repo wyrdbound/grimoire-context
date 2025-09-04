@@ -2,7 +2,7 @@
 
 [![Tests](https://github.com/wyrdbound/wyrdbound-context/workflows/Tests/badge.svg)](https://github.com/wyrdbound/wyrdbound-context/actions)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red.svg)](LICENSE)
 [![Code style: Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
 **Immutable, hierarchical context management for the Wyrdbound tabletop RPG engine.**
@@ -282,17 +282,17 @@ mypy src/
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is proprietary software. All rights reserved to The Wyrd one.
+
+No part of this software may be reproduced, distributed, or transmitted without prior written permission. See the [LICENSE](LICENSE) file for complete terms and conditions.
+
+For licensing inquiries, please contact: wyrdbound@proton.me
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
+This is a private, proprietary project. Contributions are currently limited to authorized collaborators only.
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+If you're interested in collaborating or have questions about the project, please contact: wyrdbound@proton.me
 
 ## 🎯 Use Cases
 
@@ -323,4 +323,4 @@ The package is built on several key components:
 
 ---
 
-**Made with ❤️ for the Wyrdbound tabletop RPG community**
+**Copyright (c) 2025 The Wyrd One**
