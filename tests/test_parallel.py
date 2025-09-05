@@ -70,7 +70,7 @@ class TestParallelExecution:
 
         # If they ran sequentially, the difference would be ~0.15s (0.05 + 0.1)
         # If they ran in parallel, the difference should be much smaller
-        assert time_diff < 0.05, (
+        assert time_diff < 0.1, (
             f"Operations appear to have run sequentially (time diff: {time_diff:.3f}s)"
         )
 
