@@ -45,21 +45,33 @@ class TestLoggingInjection:
     """Test logging injection and configuration."""
 
     def test_default_logger_creation(self):
-        """Test that get_logger returns a standard logger by default."""
+        """Test that get_logger returns a logger proxy by default."""
+        from wyrdbound_context.logging import LoggerProxy
+
         logger = get_logger("test_module")
-        assert isinstance(logger, logging.Logger)
-        assert logger.name == "test_module"
+        assert isinstance(logger, LoggerProxy)
+        # Verify it has the required methods
+        assert hasattr(logger, "debug")
+        assert hasattr(logger, "info")
+        assert hasattr(logger, "warning")
+        assert hasattr(logger, "error")
 
     def test_logger_injection(self):
         """Test injecting a custom logger."""
+        from wyrdbound_context.logging import LoggerProxy
+
         mock_logger = MockLogger()
 
         # Inject the custom logger
         inject_logger(mock_logger)
 
-        # Get logger should now return our mock
+        # Get logger should return a proxy that delegates to our mock
         logger = get_logger("test_module")
-        assert logger is mock_logger
+        assert isinstance(logger, LoggerProxy)
+
+        # Test that the proxy delegates to our injected logger
+        logger.debug("test message")
+        assert "test message" in mock_logger.debug_calls
 
         # Reset to default
         inject_logger(None)

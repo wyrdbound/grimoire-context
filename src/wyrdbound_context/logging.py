@@ -28,9 +28,40 @@ class LoggerProtocol(Protocol):
         ...
 
 
+class LoggerProxy:
+    """Proxy that delegates to injected logger or falls back to standard logging."""
+
+    def __init__(self, name: str):
+        self._name = name
+        module_name = name.split(".")[-1] if "." in name else name
+        self._fallback_logger = logging.getLogger(module_name)
+
+    def _get_current_logger(self) -> LoggerProtocol:
+        """Get the current active logger (injected or fallback)."""
+        global _injected_logger
+        return (
+            _injected_logger if _injected_logger is not None else self._fallback_logger
+        )
+
+    def debug(self, msg: str, *args, **kwargs) -> None:
+        self._get_current_logger().debug(msg, *args, **kwargs)
+
+    def info(self, msg: str, *args, **kwargs) -> None:
+        self._get_current_logger().info(msg, *args, **kwargs)
+
+    def warning(self, msg: str, *args, **kwargs) -> None:
+        self._get_current_logger().warning(msg, *args, **kwargs)
+
+    def error(self, msg: str, *args, **kwargs) -> None:
+        self._get_current_logger().error(msg, *args, **kwargs)
+
+    def critical(self, msg: str, *args, **kwargs) -> None:
+        self._get_current_logger().critical(msg, *args, **kwargs)
+
+
 # Global logger instance for injection
 _injected_logger: Optional[LoggerProtocol] = None
-_logger_instances: Dict[str, LoggerProtocol] = {}
+_logger_instances: Dict[str, LoggerProxy] = {}
 
 
 def inject_logger(logger: Optional[LoggerProtocol]) -> None:
@@ -40,33 +71,8 @@ def inject_logger(logger: Optional[LoggerProtocol]) -> None:
         logger: Logger implementation that conforms to LoggerProtocol,
                 or None to revert to standard logging
     """
-    global _injected_logger, _logger_instances
+    global _injected_logger
     _injected_logger = logger
-
-    # Update all existing logger instances
-    for name in _logger_instances:
-        if logger is not None:
-            _logger_instances[name] = logger
-        else:
-            # Revert to standard logger
-            module_name = name.split(".")[-1] if "." in name else name
-            _logger_instances[name] = logging.getLogger(module_name)
-
-    # Also update module-level loggers by patching the modules
-    import sys
-
-    for module_name, module in sys.modules.items():
-        if module_name.startswith("wyrdbound_context.") and hasattr(module, "logger"):
-            try:
-                if logger is not None:
-                    module.logger = logger  # type: ignore[attr-defined]
-                else:
-                    # Revert to standard logger
-                    name = module_name.split(".")[-1]
-                    module.logger = logging.getLogger(name)  # type: ignore[attr-defined]
-            except (AttributeError, TypeError):
-                # Module doesn't support attribute assignment, skip
-                pass
 
 
 def clear_logger_injection() -> None:
@@ -77,24 +83,19 @@ def clear_logger_injection() -> None:
 def get_logger(name: str) -> LoggerProtocol:
     """Get a logger instance for the given name.
 
-    If a logger has been injected, returns that logger.
-    Otherwise, returns a standard Python logger.
+    Returns a logger proxy that automatically delegates to the current
+    injected logger or falls back to standard Python logging.
 
     Args:
         name: Name for the logger (typically __name__)
 
     Returns:
-        Logger instance that conforms to LoggerProtocol
+        Logger proxy that conforms to LoggerProtocol
     """
     if name in _logger_instances:
         return _logger_instances[name]
 
-    if _injected_logger is not None:
-        _logger_instances[name] = _injected_logger
-        return _injected_logger
-    else:
-        # Return standard Python logger with just the module name
-        module_name = name.split(".")[-1] if "." in name else name
-        std_logger = logging.getLogger(module_name)
-        _logger_instances[name] = std_logger
-        return std_logger
+    # Create a new proxy for this name
+    proxy = LoggerProxy(name)
+    _logger_instances[name] = proxy
+    return proxy
