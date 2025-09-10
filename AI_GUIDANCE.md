@@ -14,6 +14,6 @@ Always remember the following points as you are working on this code base:
 
 6. Do NOT make bandaid fixes that break the rearchitecture goals for Wyrdbound Context. Always respect the architectural boundaries.
 
-7. After all code changes, run `ruff check src/ tests/ --fix`, `ruff format src/ tests/`, and `mypy src/` to ensure code quality is retained in an interative manner.
+7. After all code changes, run `source .venv/bin/activate && ruff format src/ tests/ && ruff check src/ tests/ --fix && mypy src/` to ensure code quality is retained in an interative manner.
 
 8. Avoid making lines longer than 88 characters (E501 ruff check).
