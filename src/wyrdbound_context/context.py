@@ -23,6 +23,7 @@ except ImportError:
     pmap = dict  # type: ignore
 
 from .exceptions import InvalidContextOperation, TemplateError
+from .logging import get_logger
 from .path_resolver import (
     delete_nested_path,
     get_nested_path,
@@ -30,6 +31,8 @@ from .path_resolver import (
     set_nested_path,
 )
 from .protocols import TemplateResolver
+
+logger = get_logger(__name__)
 
 
 class WyrdboundContext:
@@ -80,6 +83,14 @@ class WyrdboundContext:
 
         # Hierarchical view (computed on-demand)
         self._chain_view: Optional[ChainMap] = None
+
+        # Log context creation as example of logging usage
+        data_len = len(self._data) if hasattr(self._data, "__len__") else 0
+        parent_info = " (with parent)" if self._parent else ""
+        logger.debug(
+            f"Created WyrdboundContext '{self._id}' with {data_len} local keys"
+            f"{parent_info}"
+        )
 
     @property
     def template_resolver(self) -> Optional[TemplateResolver]:
@@ -180,12 +191,13 @@ class WyrdboundContext:
             New WyrdboundContext with the value set
         """
         new_data = self._data.set(key, value)
-        return WyrdboundContext(
+        new_context = WyrdboundContext(
             new_data,
             self._parent,
             self._template_resolver,
             str(uuid4()),  # Always generate new ID for modified contexts
         )
+        return new_context
 
     def discard(self, key: str) -> "WyrdboundContext":
         """Return new context with key removed from this hierarchical level.
@@ -213,9 +225,10 @@ class WyrdboundContext:
         new_data = self._data
         for key, value in updates.items():
             new_data = new_data.set(key, value)
-        return WyrdboundContext(
+        new_context = WyrdboundContext(
             new_data, self._parent, self._template_resolver, str(uuid4())
         )
+        return new_context
 
     # Hierarchical context management
     def create_child_context(
@@ -232,12 +245,13 @@ class WyrdboundContext:
         Returns:
             New child WyrdboundContext
         """
-        return WyrdboundContext(
+        child_context = WyrdboundContext(
             initial_data,
             parent=self,
             template_resolver=self._template_resolver,
             context_id=context_id,
         )
+        return child_context
 
     # Path-based operations
     def set_variable(self, path: str, value: Any) -> "WyrdboundContext":
@@ -251,9 +265,10 @@ class WyrdboundContext:
             New WyrdboundContext with the variable set
         """
         new_data = set_nested_path(self._data, path, value)
-        return WyrdboundContext(
+        new_context = WyrdboundContext(
             new_data, self._parent, self._template_resolver, str(uuid4())
         )
+        return new_context
 
     def get_variable(self, path: str, default: Any = None) -> Any:
         """Get value at dot-notation path.
@@ -309,10 +324,19 @@ class WyrdboundContext:
             raise TemplateError("No template resolver configured")
 
         try:
-            return self._template_resolver.resolve_template(
+            # Example logging for error cases
+            template_preview = template_str[:100]
+            ellipsis = "..." if len(template_str) > 100 else ""
+            logger.debug(
+                f"Resolving template in context '{self._id}': "
+                f"{template_preview}{ellipsis}"
+            )
+            result = self._template_resolver.resolve_template(
                 template_str, dict(self.chain_view)
             )
+            return result
         except Exception as e:
+            logger.error(f"Template resolution failed in context '{self._id}': {e}")
             raise TemplateError(f"Template resolution failed: {e}") from e
 
     def set_template_resolver(self, resolver: TemplateResolver) -> "WyrdboundContext":

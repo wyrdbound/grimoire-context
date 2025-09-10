@@ -5,6 +5,9 @@ from typing import Any, Dict, Union
 from pyrsistent import PMap, pmap
 
 from .exceptions import PathResolutionError
+from .logging import get_logger
+
+logger = get_logger(__name__)
 
 
 def get_nested_path(
@@ -90,6 +93,8 @@ def set_nested_path(data: PMap[str, Any], path: str, value: Any) -> PMap[str, An
         return data.set(key, dict(updated_nested))
 
     except Exception as e:
+        # Example logging for error cases
+        logger.error(f"Failed to set nested path '{path}': {e}")
         raise PathResolutionError(f"Failed to set path '{path}': {e}") from e
 
 
