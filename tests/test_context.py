@@ -282,8 +282,11 @@ class TestUtilityMethods:
 
     def test_local_data(self):
         """Test getting local data only."""
-        data = {"a": 1, "b": 2}
-        context = WyrdboundContext(data)
+        parent_data = {"a": 1}
+        data = {"b": 2, "c": 3}
+        context = WyrdboundContext(data, parent=WyrdboundContext(parent_data))
+
+        # Local data should only include 'b' and 'c'
         assert context.local_data() == data
 
     def test_repr(self):

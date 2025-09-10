@@ -25,6 +25,7 @@ from .exceptions import (
     TemplateError,
     WyrdboundContextError,
 )
+from .logging import LoggerProtocol, get_logger, inject_logger
 from .merge import ContextMerger
 from .protocols import TemplateResolver
 
@@ -38,6 +39,10 @@ __all__ = [
     "ContextMerger",
     # Protocols
     "TemplateResolver",
+    # Logging
+    "get_logger",
+    "inject_logger",
+    "LoggerProtocol",
     # Exceptions
     "WyrdboundContextError",
     "TemplateError",

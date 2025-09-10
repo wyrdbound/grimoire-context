@@ -4,6 +4,9 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import TYPE_CHECKING, Any, Callable, Dict, List
 
 from .exceptions import ContextMergeError
+from .logging import get_logger
+
+logger = get_logger(__name__)
 
 if TYPE_CHECKING:
     from .context import WyrdboundContext
@@ -254,6 +257,8 @@ class ContextMerger:
 
         if conflicted_paths:
             paths_str = sorted(conflicted_paths)
+            # Example logging for conflict detection
+            logger.warning(f"Path conflicts detected in parallel merge: {paths_str}")
             raise ContextMergeError(f"Path conflicts in parallel merge: {paths_str}")
 
         # Merge all contexts using the original merge logic (now safe from conflicts)
