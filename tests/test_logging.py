@@ -26,19 +26,19 @@ class MockLogger:
         self.critical_calls = []
 
     def debug(self, msg: str, *args, **kwargs) -> None:
-        self.debug_calls.append(msg % args if args else msg)
+        self.debug_calls.append(msg % args if args and '%' in msg else msg)
 
     def info(self, msg: str, *args, **kwargs) -> None:
-        self.info_calls.append(msg % args if args else msg)
+        self.info_calls.append(msg % args if args and '%' in msg else msg)
 
     def warning(self, msg: str, *args, **kwargs) -> None:
-        self.warning_calls.append(msg % args if args else msg)
+        self.warning_calls.append(msg % args if args and '%' in msg else msg)
 
     def error(self, msg: str, *args, **kwargs) -> None:
-        self.error_calls.append(msg % args if args else msg)
+        self.error_calls.append(msg % args if args and '%' in msg else msg)
 
     def critical(self, msg: str, *args, **kwargs) -> None:
-        self.critical_calls.append(msg % args if args else msg)
+        self.critical_calls.append(msg % args if args and '%' in msg else msg)
 
 
 class TestLoggingInjection:
