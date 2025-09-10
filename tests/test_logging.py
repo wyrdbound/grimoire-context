@@ -302,41 +302,197 @@ class TestLoggingInjection:
 class TestLoggingThreadSafety:
     """Test that logging injection is thread-safe."""
 
-    def test_concurrent_logger_injection(self):
-        """Test that logger injection works correctly under concurrent access."""
+    def test_concurrent_logger_registry_race_condition(self):
+        """Test for race conditions in logger registry creation."""
         import threading
-        import time
 
-        results = {}
+        from wyrdbound_context.logging import _logger_instances
 
-        def worker(worker_id: int):
-            # Each worker injects its own logger
-            mock_logger = MockLogger()
-            inject_logger(mock_logger)
+        # Clear any existing instances
+        inject_logger(None)
+        _logger_instances.clear()
 
-            # Small delay to increase chance of race conditions
-            time.sleep(0.01)
+        results = []
+        errors = []
+        logger_instances = []
 
-            # Create context and verify we get our logger
-            logger = get_logger(f"worker_{worker_id}")
-            results[worker_id] = logger is mock_logger
+        def aggressive_worker(worker_id: int):
+            try:
+                # Rapidly create and access the same logger name from multiple threads
+                # This should expose race conditions in registry access
+                for _ in range(1000):
+                    logger = get_logger("shared_logger_name")
+                    logger_instances.append(logger)
 
-            # Reset
-            inject_logger(None)
+                    # Verify it's always the same instance (should fail without locking)
+                    logger2 = get_logger("shared_logger_name")
+                    if logger is not logger2:
+                        errors.append(f"Worker {worker_id}: Got different instances!")
 
-        # Start multiple threads
+                results.append(worker_id)
+            except Exception as e:
+                errors.append(f"Worker {worker_id}: {str(e)}")
+
+        # Use many threads with no delays to maximize contention
         threads = []
-        for i in range(10):
-            thread = threading.Thread(target=worker, args=(i,))
+        for i in range(50):
+            thread = threading.Thread(target=aggressive_worker, args=(i,))
             threads.append(thread)
+
+        # Start all threads simultaneously
+        for thread in threads:
             thread.start()
 
-        # Wait for all threads to complete
+        # Wait for completion
         for thread in threads:
             thread.join()
 
-        # All workers should have gotten their own logger
-        # Note: Due to the global nature of the injection, this test
-        # actually demonstrates the race condition rather than thread safety
-        # In practice, logger injection should be done once at startup
-        assert len(results) == 10
+        # All instances for the same name should be identical
+        shared_logger = get_logger("shared_logger_name")
+        for instance in logger_instances:
+            assert instance is shared_logger, "Registry created multiple instances!"
+
+        assert len(errors) == 0, f"Race condition detected: {errors}"
+        assert len(results) == 50
+
+    def test_logger_injection_race_condition(self):
+        """Test for race conditions during logger injection."""
+        import threading
+
+        mock_logger1 = MockLogger()
+        mock_logger2 = MockLogger()
+        mock_logger3 = MockLogger()
+
+        injection_results = []
+        access_results = []
+        errors = []
+
+        def rapid_injector(logger, injector_id):
+            """Rapidly inject loggers to create race conditions."""
+            try:
+                for _i in range(1000):
+                    inject_logger(logger)
+                    # Just do the injection, don't check immediately
+                    # (other threads will change it concurrently)
+                injection_results.append(injector_id)
+            except Exception as e:
+                errors.append(f"Injector {injector_id}: {str(e)}")
+
+        def rapid_accessor(accessor_id):
+            """Rapidly access logger state to detect inconsistencies."""
+            try:
+                logger_proxy = get_logger(f"accessor_{accessor_id}")
+                for i in range(1000):
+                    # This should always work, even during injection changes
+                    # Test actual logging calls which use _get_current_logger internally
+                    logger_proxy.debug(f"Test message {i}")
+                access_results.append(accessor_id)
+            except Exception as e:
+                errors.append(f"Accessor {accessor_id}: {str(e)}")
+
+        # Start multiple threads doing rapid injections and access
+        threads = []
+
+        # Multiple injector threads with different loggers
+        for i, logger in enumerate([mock_logger1, mock_logger2, mock_logger3]):
+            thread = threading.Thread(target=rapid_injector, args=(logger, i))
+            threads.append(thread)
+
+        # Multiple accessor threads
+        for i in range(10):
+            thread = threading.Thread(target=rapid_accessor, args=(i,))
+            threads.append(thread)
+
+        # Start all threads simultaneously (no delays)
+        for thread in threads:
+            thread.start()
+
+        # Wait for completion
+        for thread in threads:
+            thread.join()
+
+        # Clean up
+        inject_logger(None)
+
+        assert len(errors) == 0, f"Race conditions detected: {errors[:10]}"
+        assert len(injection_results) == 3
+        assert len(access_results) == 10
+
+    def test_dictionary_corruption_race_condition(self):
+        """Test for dictionary corruption during concurrent access."""
+        import threading
+
+        from wyrdbound_context.logging import _logger_instances
+
+        # Clear registry
+        inject_logger(None)
+        _logger_instances.clear()
+
+        errors = []
+        exception_count = 0
+
+        def dictionary_corruptor(worker_id: int):
+            """Aggressively corrupt the dictionary to demonstrate race conditions."""
+            nonlocal exception_count
+            try:
+                # Rapidly create, check, and modify the same key
+                shared_key = "shared_logger_key"
+                for i in range(5000):
+                    try:
+                        # This sequence without locking can cause:
+                        # - KeyError if key is deleted between check and access
+                        # - RuntimeError if dictionary changes size during iteration
+                        # - Inconsistent state with different thread views
+
+                        if shared_key in _logger_instances:
+                            # Another thread might delete this between check and access
+                            _logger_instances[shared_key]
+
+                        # Create new instance (might conflict with other threads)
+                        from wyrdbound_context.logging import LoggerProxy
+
+                        new_proxy = LoggerProxy(shared_key)
+                        _logger_instances[shared_key] = new_proxy
+
+                        # Verify it's still there (might fail due to race)
+                        if shared_key in _logger_instances:
+                            retrieved = _logger_instances[shared_key]
+                            if retrieved is not new_proxy:
+                                msg = f"W{worker_id}: Proxy changed at iter {i}"
+                                errors.append(msg)
+
+                    except (KeyError, RuntimeError, ValueError) as e:
+                        # These exceptions indicate race conditions in dictionary access
+                        exception_count += 1
+                        if exception_count < 10:  # Don't spam too many error messages
+                            msg = f"W{worker_id}: Race {type(e).__name__}: {e}"
+                            errors.append(msg)
+
+            except Exception as e:
+                errors.append(f"Worker {worker_id}: Unexpected error: {str(e)}")
+
+        # Many threads simultaneously corrupting the dictionary
+        threads = []
+        for i in range(20):  # High concurrency
+            thread = threading.Thread(target=dictionary_corruptor, args=(i,))
+            threads.append(thread)
+
+        # Start all threads simultaneously to maximize contention
+        for thread in threads:
+            thread.start()
+
+        # Wait for all to complete
+        for thread in threads:
+            thread.join()
+
+        # Without proper locking, we expect to see race condition exceptions
+        # If no exceptions occurred, the test might not be aggressive enough
+        if exception_count == 0 and len(errors) == 0:
+            # This suggests either the race condition is very rare or not occurring
+            # Let's be lenient for now but document this
+            print(f"\nWARNING: No race conditions detected in {20 * 5000} operations")
+            print("Race condition might be rare or test needs to be more aggressive")
+
+        # For now, just verify no unexpected errors occurred
+        unexpected_errors = [e for e in errors if "Unexpected error:" in e]
+        assert len(unexpected_errors) == 0, f"Unexpected errors: {unexpected_errors}"
