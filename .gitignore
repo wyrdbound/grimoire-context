@@ -6,6 +6,7 @@ __pycache__/
 # Python virtual environments
 .venv/
 .tool-versions
+src/grimoire_context.egg-info/
 
 # MacOS system files
 .DS_Store
@@ -15,4 +16,4 @@ __pycache__/
 *.tmp
 *.bak
 *.backup
-WYRDBOUND_CONTEXT_PLAN.md
+GRIMOIRE_CONTEXT_PLAN.md

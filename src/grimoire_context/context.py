@@ -1,4 +1,4 @@
-"""Core WyrdboundContext implementation."""
+"""Core GrimoireContext implementation."""
 
 from collections import ChainMap
 from typing import (
@@ -35,8 +35,8 @@ from .protocols import TemplateResolver
 logger = get_logger(__name__)
 
 
-class WyrdboundContext:
-    """Immutable, hierarchical context for Wyrdbound flows.
+class GrimoireContext:
+    """Immutable, hierarchical context for Grimoire flows.
 
     This class provides a dict-like interface for storing and accessing data
     while maintaining immutability through copy-on-write semantics. It supports
@@ -55,11 +55,11 @@ class WyrdboundContext:
     def __init__(
         self,
         data: Optional[Union[Dict[str, Any], Any]] = None,
-        parent: Optional["WyrdboundContext"] = None,
+        parent: Optional["GrimoireContext"] = None,
         template_resolver: Optional[TemplateResolver] = None,
         context_id: Optional[str] = None,
     ) -> None:
-        """Initialize a new WyrdboundContext.
+        """Initialize a new GrimoireContext.
 
         Args:
             data: Initial data for this context level
@@ -75,7 +75,7 @@ class WyrdboundContext:
         else:
             self._data = data
 
-        self._parent: Optional[WyrdboundContext] = parent
+        self._parent: Optional[GrimoireContext] = parent
         self._template_resolver = template_resolver or (
             parent.template_resolver if parent else None
         )
@@ -88,7 +88,7 @@ class WyrdboundContext:
         data_len = len(self._data) if hasattr(self._data, "__len__") else 0
         parent_info = " (with parent)" if self._parent else ""
         logger.debug(
-            f"Created WyrdboundContext '{self._id}' with {data_len} local keys"
+            f"Created GrimoireContext '{self._id}' with {data_len} local keys"
             f"{parent_info}"
         )
 
@@ -103,7 +103,7 @@ class WyrdboundContext:
         return self._id
 
     @property
-    def parent(self) -> Optional["WyrdboundContext"]:
+    def parent(self) -> Optional["GrimoireContext"]:
         """Get the parent context."""
         return self._parent
 
@@ -155,13 +155,13 @@ class WyrdboundContext:
 
     def __eq__(self, other: object) -> bool:
         """Check equality with another context."""
-        if not isinstance(other, WyrdboundContext):
+        if not isinstance(other, GrimoireContext):
             return False
         return dict(self.chain_view) == dict(other.chain_view)
 
     def __repr__(self) -> str:
         """String representation of the context."""
-        return f"WyrdboundContext(id={self._id}, data={dict(self._data)})"
+        return f"GrimoireContext(id={self._id}, data={dict(self._data)})"
 
     def keys(self) -> KeysView[str]:
         """Get all keys from context hierarchy."""
@@ -180,7 +180,7 @@ class WyrdboundContext:
         return self.chain_view.get(key, default)
 
     # Immutable operations
-    def set(self, key: str, value: Any) -> "WyrdboundContext":
+    def set(self, key: str, value: Any) -> "GrimoireContext":
         """Return new context with updated value at this hierarchical level.
 
         Args:
@@ -188,10 +188,10 @@ class WyrdboundContext:
             value: Value to set
 
         Returns:
-            New WyrdboundContext with the value set
+            New GrimoireContext with the value set
         """
         new_data = self._data.set(key, value)
-        new_context = WyrdboundContext(
+        new_context = GrimoireContext(
             new_data,
             self._parent,
             self._template_resolver,
@@ -199,33 +199,33 @@ class WyrdboundContext:
         )
         return new_context
 
-    def discard(self, key: str) -> "WyrdboundContext":
+    def discard(self, key: str) -> "GrimoireContext":
         """Return new context with key removed from this hierarchical level.
 
         Args:
             key: Key to remove
 
         Returns:
-            New WyrdboundContext with the key removed
+            New GrimoireContext with the key removed
         """
         new_data = self._data.discard(key)
-        return WyrdboundContext(
+        return GrimoireContext(
             new_data, self._parent, self._template_resolver, str(uuid4())
         )
 
-    def update(self, updates: Dict[str, Any]) -> "WyrdboundContext":
+    def update(self, updates: Dict[str, Any]) -> "GrimoireContext":
         """Return new context with multiple updates.
 
         Args:
             updates: Dictionary of key-value pairs to update
 
         Returns:
-            New WyrdboundContext with all updates applied
+            New GrimoireContext with all updates applied
         """
         new_data = self._data
         for key, value in updates.items():
             new_data = new_data.set(key, value)
-        new_context = WyrdboundContext(
+        new_context = GrimoireContext(
             new_data, self._parent, self._template_resolver, str(uuid4())
         )
         return new_context
@@ -235,7 +235,7 @@ class WyrdboundContext:
         self,
         initial_data: Optional[Dict[str, Any]] = None,
         context_id: Optional[str] = None,
-    ) -> "WyrdboundContext":
+    ) -> "GrimoireContext":
         """Create a new child context with this context as parent.
 
         Args:
@@ -243,9 +243,9 @@ class WyrdboundContext:
             context_id: Optional custom ID for the child context
 
         Returns:
-            New child WyrdboundContext
+            New child GrimoireContext
         """
-        child_context = WyrdboundContext(
+        child_context = GrimoireContext(
             initial_data,
             parent=self,
             template_resolver=self._template_resolver,
@@ -254,7 +254,7 @@ class WyrdboundContext:
         return child_context
 
     # Path-based operations
-    def set_variable(self, path: str, value: Any) -> "WyrdboundContext":
+    def set_variable(self, path: str, value: Any) -> "GrimoireContext":
         """Set value at dot-notation path (e.g., 'outputs.character.hp').
 
         Args:
@@ -262,10 +262,10 @@ class WyrdboundContext:
             value: Value to set
 
         Returns:
-            New WyrdboundContext with the variable set
+            New GrimoireContext with the variable set
         """
         new_data = set_nested_path(self._data, path, value)
-        new_context = WyrdboundContext(
+        new_context = GrimoireContext(
             new_data, self._parent, self._template_resolver, str(uuid4())
         )
         return new_context
@@ -293,17 +293,17 @@ class WyrdboundContext:
         """
         return has_nested_path(dict(self.chain_view), path)
 
-    def delete_variable(self, path: str) -> "WyrdboundContext":
+    def delete_variable(self, path: str) -> "GrimoireContext":
         """Delete variable at dot-notation path.
 
         Args:
             path: Dot-separated path to delete
 
         Returns:
-            New WyrdboundContext with the variable deleted
+            New GrimoireContext with the variable deleted
         """
         new_data = delete_nested_path(self._data, path)
-        return WyrdboundContext(
+        return GrimoireContext(
             new_data, self._parent, self._template_resolver, str(uuid4())
         )
 
@@ -339,16 +339,16 @@ class WyrdboundContext:
             logger.error(f"Template resolution failed in context '{self._id}': {e}")
             raise TemplateError(f"Template resolution failed: {e}") from e
 
-    def set_template_resolver(self, resolver: TemplateResolver) -> "WyrdboundContext":
+    def set_template_resolver(self, resolver: TemplateResolver) -> "GrimoireContext":
         """Return new context with different template resolver.
 
         Args:
             resolver: New template resolver to use
 
         Returns:
-            New WyrdboundContext with the resolver set
+            New GrimoireContext with the resolver set
         """
-        return WyrdboundContext(self._data, self._parent, resolver, str(uuid4()))
+        return GrimoireContext(self._data, self._parent, resolver, str(uuid4()))
 
     # Utility methods
     def to_dict(self) -> Dict[str, Any]:
@@ -367,30 +367,30 @@ class WyrdboundContext:
         """
         return dict(self._data)
 
-    def copy(self, new_id: Optional[str] = None) -> "WyrdboundContext":
+    def copy(self, new_id: Optional[str] = None) -> "GrimoireContext":
         """Create a copy of this context with a new ID.
 
         Args:
             new_id: Optional new ID for the copy
 
         Returns:
-            New WyrdboundContext that is a copy of this one
+            New GrimoireContext that is a copy of this one
         """
-        return WyrdboundContext(
+        return GrimoireContext(
             self._data, self._parent, self._template_resolver, new_id or str(uuid4())
         )
 
     # Support for parallel execution (delegated to merge module)
     def execute_parallel(
-        self, operations: List[Callable[["WyrdboundContext"], "WyrdboundContext"]]
-    ) -> "WyrdboundContext":
+        self, operations: List[Callable[["GrimoireContext"], "GrimoireContext"]]
+    ) -> "GrimoireContext":
         """Execute operations in parallel and return merged result.
 
         Args:
             operations: List of functions that take a context and return a context
 
         Returns:
-            New WyrdboundContext with merged results from all operations
+            New GrimoireContext with merged results from all operations
         """
         from .merge import ContextMerger
 

@@ -1,10 +1,10 @@
-# Logging in Wyrdbound Context
+# Logging in Grimoire Context
 
-This document describes how to configure and use logging in the `wyrdbound-context` library.
+This document describes how to configure and use logging in the `grimoire-context` library.
 
 ## Overview
 
-The `wyrdbound-context` library uses dependency injection for logging, allowing applications to choose their preferred logging implementation. You can either use the standard Python `logging` module or inject your own custom logger implementation.
+The `grimoire-context` library uses dependency injection for logging, allowing applications to choose their preferred logging implementation. You can either use the standard Python `logging` module or inject your own custom logger implementation.
 
 ## Basic Usage
 
@@ -14,15 +14,15 @@ By default, the library uses Python's standard `logging` module:
 
 ```python
 import logging
-from wyrdbound_context import WyrdboundContext
+from grimoire_context import GrimoireContext
 
 # Configure standard logging
 logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger('wyrdbound_context')
+logger = logging.getLogger('grimoire_context')
 logger.setLevel(logging.DEBUG)
 
 # Create context - will log using standard logging
-context = WyrdboundContext({'key': 'value'})
+context = GrimoireContext({'key': 'value'})
 ```
 
 ### Injecting a Custom Logger
@@ -30,7 +30,7 @@ context = WyrdboundContext({'key': 'value'})
 You can inject your own logger implementation that follows the `LoggerProtocol`:
 
 ```python
-from wyrdbound_context import inject_logger, LoggerProtocol, WyrdboundContext
+from grimoire_context import inject_logger, LoggerProtocol, GrimoireContext
 
 class MyLogger:
     def debug(self, message: str) -> None:
@@ -49,7 +49,7 @@ class MyLogger:
 inject_logger(MyLogger())
 
 # Now all logging will use your custom logger
-context = WyrdboundContext({'key': 'value'})
+context = GrimoireContext({'key': 'value'})
 ```
 
 ### Resetting to Standard Logging
@@ -57,7 +57,7 @@ context = WyrdboundContext({'key': 'value'})
 To return to standard Python logging:
 
 ```python
-from wyrdbound_context import inject_logger
+from grimoire_context import inject_logger
 
 # Reset to standard logging
 inject_logger(None)
@@ -86,8 +86,8 @@ The library logs the following events:
 - **Context Creation**: When new contexts are created
 
   ```
-  Created WyrdboundContext 'abc123' with 2 local keys
-  Created WyrdboundContext 'def456' with 1 local keys (with parent)
+  Created GrimoireContext 'abc123' with 2 local keys
+  Created GrimoireContext 'def456' with 1 local keys (with parent)
   ```
 
 - **Template Resolution**: When templates are being resolved
@@ -122,14 +122,14 @@ The library logs the following events:
 ```python
 import json
 import sys
-from wyrdbound_context import inject_logger
+from grimoire_context import inject_logger
 
 class JSONLogger:
     def _log(self, level: str, message: str):
         log_entry = {
             "timestamp": "2025-01-01T12:00:00Z",
             "level": level,
-            "logger": "wyrdbound_context",
+            "logger": "grimoire_context",
             "message": message
         }
         print(json.dumps(log_entry), file=sys.stderr)
@@ -152,12 +152,12 @@ inject_logger(JSONLogger())
 ### Filtering Specific Messages
 
 ```python
-from wyrdbound_context import inject_logger
+from grimoire_context import inject_logger
 
 class FilteringLogger:
     def __init__(self, base_logger):
         self.base_logger = base_logger
-        self.ignored_patterns = ["Created WyrdboundContext"]
+        self.ignored_patterns = ["Created GrimoireContext"]
 
     def _should_log(self, message: str) -> bool:
         return not any(pattern in message for pattern in self.ignored_patterns)
@@ -178,7 +178,7 @@ class FilteringLogger:
 
 # Use with standard logging
 import logging
-standard_logger = logging.getLogger('wyrdbound_context')
+standard_logger = logging.getLogger('grimoire_context')
 inject_logger(FilteringLogger(standard_logger))
 ```
 
@@ -187,11 +187,11 @@ inject_logger(FilteringLogger(standard_logger))
 ```python
 # Example with structlog
 import structlog
-from wyrdbound_context import inject_logger
+from grimoire_context import inject_logger
 
 class StructlogAdapter:
     def __init__(self):
-        self.logger = structlog.get_logger("wyrdbound_context")
+        self.logger = structlog.get_logger("grimoire_context")
 
     def debug(self, message: str) -> None:
         self.logger.debug(message)
@@ -242,18 +242,18 @@ def worker_thread():
 ```python
 import logging
 import os
-from wyrdbound_context import inject_logger
+from grimoire_context import inject_logger
 
 def setup_logging():
     """Set up logging for production use."""
-    level = os.getenv('WYRDBOUND_LOG_LEVEL', 'INFO').upper()
+    level = os.getenv('GRIMOIRE_LOG_LEVEL', 'INFO').upper()
 
     logging.basicConfig(
         level=getattr(logging, level),
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         handlers=[
             logging.StreamHandler(),
-            logging.FileHandler('wyrdbound.log')
+            logging.FileHandler('grimoire.log')
         ]
     )
 

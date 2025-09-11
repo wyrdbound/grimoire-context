@@ -1,14 +1,14 @@
-"""Integration tests for WyrdboundContext package."""
+"""Integration tests for GrimoireContext package."""
 
 from typing import Any, Dict
 
 import pytest
 
-from wyrdbound_context import (
+from grimoire_context import (
     ContextMergeError,
+    GrimoireContext,
     InvalidContextOperation,
     TemplateError,
-    WyrdboundContext,
 )
 
 
@@ -66,7 +66,7 @@ class TestIntegrationScenarios:
     def test_rpg_character_management(self):
         """Test managing RPG character data."""
         # Global game context
-        global_ctx = WyrdboundContext(
+        global_ctx = GrimoireContext(
             {"system": "knave_1e", "session_id": "session_001", "debug_mode": False}
         )
 
@@ -118,7 +118,7 @@ class TestIntegrationScenarios:
         resolver = JinjaLikeResolver()
 
         # Create context with template resolver
-        context = WyrdboundContext(
+        context = GrimoireContext(
             {
                 "character": {"name": "Frodo", "class": "rogue"},
                 "dice": {"result": 18, "modifier": 3},
@@ -150,7 +150,7 @@ class TestIntegrationScenarios:
 
     def test_parallel_skill_checks(self):
         """Test parallel execution for multiple skill checks."""
-        party_context = WyrdboundContext(
+        party_context = GrimoireContext(
             {
                 "party": {
                     "aragorn": {"stealth": 12, "perception": 15},
@@ -186,7 +186,7 @@ class TestIntegrationScenarios:
     def test_complex_nested_workflow(self):
         """Test complex nested operations and rollback scenarios."""
         # Start with base campaign context
-        campaign = WyrdboundContext(
+        campaign = GrimoireContext(
             {
                 "campaign": {"name": "Lord of the Rings", "chapter": 1},
                 "world": {"time": "morning", "weather": "clear"},
@@ -220,7 +220,7 @@ class TestIntegrationScenarios:
 
     def test_error_handling_integration(self):
         """Test comprehensive error handling."""
-        context = WyrdboundContext({"valid": "data"})
+        context = GrimoireContext({"valid": "data"})
 
         # Test template error without resolver
         with pytest.raises(TemplateError):
@@ -255,7 +255,7 @@ class TestIntegrationScenarios:
                 },
             }
 
-        context = WyrdboundContext(large_data)
+        context = GrimoireContext(large_data)
 
         # Perform multiple operations
         updated = context.set_variable("item_500.properties.value", 9999)
@@ -277,9 +277,9 @@ class TestIntegrationScenarios:
         assert len(updated) == 1000  # 999 original + 1 new - 1 removed + 1 added
 
     def test_real_world_usage_patterns(self):
-        """Test patterns that would be used in real Wyrdbound scenarios."""
+        """Test patterns that would be used in real Grimoire scenarios."""
         # Engine initialization
-        engine_ctx = WyrdboundContext(
+        engine_ctx = GrimoireContext(
             {
                 "engine": {"version": "1.0", "debug": False},
                 "grimoire": {"loaded_models": ["character", "spell", "item"]},

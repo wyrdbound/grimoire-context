@@ -1,6 +1,6 @@
-"""Wyrdbound Context Package.
+"""Grimoire Context Package.
 
-Immutable, hierarchical context management for the Wyrdbound tabletop RPG engine.
+Immutable, hierarchical context management for the Grimoire tabletop RPG engine.
 
 This package provides a flexible context management solution that supports:
 - Immutable operations with copy-on-write semantics
@@ -10,32 +10,32 @@ This package provides a flexible context management solution that supports:
 - Parallel execution support
 
 Example usage:
-    >>> from wyrdbound_context import WyrdboundContext
-    >>> context = WyrdboundContext({'player': 'Alice', 'hp': 100})
+    >>> from grimoire_context import GrimoireContext
+    >>> context = GrimoireContext({'player': 'Alice', 'hp': 100})
     >>> new_context = context.set_variable('hp', 90)
     >>> print(context['hp'])  # 100 (original unchanged)
     >>> print(new_context['hp'])  # 90 (new version)
 """
 
-from .context import WyrdboundContext
+from .context import GrimoireContext
 from .exceptions import (
     ContextMergeError,
+    GrimoireContextError,
     InvalidContextOperation,
     PathResolutionError,
     TemplateError,
-    WyrdboundContextError,
 )
 from .logging import LoggerProtocol, get_logger, inject_logger
 from .merge import ContextMerger
 from .protocols import TemplateResolver
 
 __version__ = "0.1.0"
-__author__ = "Wyrdbound Team"
-__email__ = "team@wyrdbound.com"
+__author__ = "Grimoire Team"
+__email__ = "team@grimoire.com"
 
 __all__ = [
     # Main classes
-    "WyrdboundContext",
+    "GrimoireContext",
     "ContextMerger",
     # Protocols
     "TemplateResolver",
@@ -44,7 +44,7 @@ __all__ = [
     "inject_logger",
     "LoggerProtocol",
     # Exceptions
-    "WyrdboundContextError",
+    "GrimoireContextError",
     "TemplateError",
     "ContextMergeError",
     "PathResolutionError",

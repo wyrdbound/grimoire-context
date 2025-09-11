@@ -4,22 +4,22 @@ import time
 
 import pytest
 
-from wyrdbound_context import ContextMergeError, WyrdboundContext
+from grimoire_context import ContextMergeError, GrimoireContext
 
 
-def slow_operation_a(context: WyrdboundContext) -> WyrdboundContext:
+def slow_operation_a(context: GrimoireContext) -> GrimoireContext:
     """Slow operation that sets result_a."""
     time.sleep(0.1)  # Simulate work
     return context.set("result_a", "value_a")
 
 
-def slow_operation_b(context: WyrdboundContext) -> WyrdboundContext:
+def slow_operation_b(context: GrimoireContext) -> GrimoireContext:
     """Slow operation that sets result_b."""
     time.sleep(0.1)  # Simulate work
     return context.set("result_b", "value_b")
 
 
-def timing_operation_a(context: WyrdboundContext) -> WyrdboundContext:
+def timing_operation_a(context: GrimoireContext) -> GrimoireContext:
     """Operation that records timing to test parallel execution."""
     time.sleep(0.05)  # Initial delay
     result_context = context.set("timing_a", time.time())
@@ -27,7 +27,7 @@ def timing_operation_a(context: WyrdboundContext) -> WyrdboundContext:
     return result_context
 
 
-def timing_operation_b(context: WyrdboundContext) -> WyrdboundContext:
+def timing_operation_b(context: GrimoireContext) -> GrimoireContext:
     """Operation that records timing to test parallel execution."""
     time.sleep(0.05)  # Initial delay
     result_context = context.set("timing_b", time.time())
@@ -35,7 +35,7 @@ def timing_operation_b(context: WyrdboundContext) -> WyrdboundContext:
     return result_context
 
 
-def conflicting_operation(context: WyrdboundContext) -> WyrdboundContext:
+def conflicting_operation(context: GrimoireContext) -> GrimoireContext:
     """Operation that conflicts with other operations."""
     return context.set("result_a", "conflicting_value")
 
@@ -45,7 +45,7 @@ class TestParallelExecution:
 
     def test_execute_parallel_basic(self):
         """Test basic parallel execution without conflicts."""
-        context = WyrdboundContext({"base": "value"})
+        context = GrimoireContext({"base": "value"})
 
         operations = [slow_operation_a, slow_operation_b]
         result = context.execute_parallel(operations)
@@ -57,7 +57,7 @@ class TestParallelExecution:
 
     def test_execute_parallel_timing(self):
         """Test that operations actually run in parallel by checking timing overlap."""
-        context = WyrdboundContext({"base": "value"})
+        context = GrimoireContext({"base": "value"})
 
         operations = [timing_operation_a, timing_operation_b]
         result = context.execute_parallel(operations)
@@ -76,7 +76,7 @@ class TestParallelExecution:
 
     def test_execute_parallel_with_conflicts(self):
         """Test parallel execution with conflicting operations."""
-        context = WyrdboundContext({"base": "value"})
+        context = GrimoireContext({"base": "value"})
 
         # Operations that set the same key
         operations = [slow_operation_a, conflicting_operation]
@@ -86,7 +86,7 @@ class TestParallelExecution:
 
     def test_execute_parallel_empty_operations(self):
         """Test parallel execution with empty operations list."""
-        context = WyrdboundContext({"base": "value"})
+        context = GrimoireContext({"base": "value"})
         result = context.execute_parallel([])
 
         # Should return the original context
@@ -94,7 +94,7 @@ class TestParallelExecution:
 
     def test_execute_parallel_single_operation(self):
         """Test parallel execution with single operation."""
-        context = WyrdboundContext({"base": "value"})
+        context = GrimoireContext({"base": "value"})
 
         result = context.execute_parallel([slow_operation_a])
 
@@ -103,7 +103,7 @@ class TestParallelExecution:
 
     def test_execute_parallel_with_path_operations(self):
         """Test parallel execution with path-based operations."""
-        context = WyrdboundContext({"character": {"name": "Aragorn"}})
+        context = GrimoireContext({"character": {"name": "Aragorn"}})
 
         def set_hp(ctx):
             return ctx.set_variable("character.hp", 100)
@@ -124,7 +124,7 @@ class TestParallelExecution:
 
     def test_parallel_operation_isolation(self):
         """Test that parallel operations work on independent contexts."""
-        context = WyrdboundContext({"counter": 0})
+        context = GrimoireContext({"counter": 0})
 
         def increment_counter(ctx):
             current = ctx["counter"]
@@ -141,7 +141,7 @@ class TestParallelExecution:
 
     def test_parallel_with_hierarchical_contexts(self):
         """Test parallel execution with hierarchical contexts."""
-        parent = WyrdboundContext({"system": "wyrdbound"})
+        parent = GrimoireContext({"system": "grimoire"})
         child = parent.create_child_context({"character": "Frodo"})
 
         def set_hp(ctx):
@@ -155,14 +155,14 @@ class TestParallelExecution:
 
         # Should preserve hierarchy
         assert result.parent is parent
-        assert result["system"] == "wyrdbound"  # From parent
+        assert result["system"] == "grimoire"  # From parent
         assert result["character"] == "Frodo"  # From child
         assert result.get_variable("stats.hp") == 100
         assert result.get_variable("stats.mp") == 50
 
     def test_parallel_operation_error_handling(self):
         """Test error handling in parallel operations."""
-        context = WyrdboundContext({"base": "value"})
+        context = GrimoireContext({"base": "value"})
 
         def failing_operation(ctx):
             raise ValueError("Operation failed")
@@ -181,9 +181,9 @@ class TestContextMerger:
 
     def test_merge_contexts_basic(self):
         """Test basic context merging."""
-        from wyrdbound_context.merge import ContextMerger
+        from grimoire_context.merge import ContextMerger
 
-        base = WyrdboundContext({"a": 1})
+        base = GrimoireContext({"a": 1})
         context1 = base.set("b", 2)
         context2 = base.set("c", 3)
 
@@ -195,9 +195,9 @@ class TestContextMerger:
 
     def test_merge_contexts_with_conflicts(self):
         """Test context merging with conflicts."""
-        from wyrdbound_context.merge import ContextMerger
+        from grimoire_context.merge import ContextMerger
 
-        base = WyrdboundContext({"a": 1})
+        base = GrimoireContext({"a": 1})
         context1 = base.set("b", 2)
         context2 = base.set("b", 3)  # Conflict on 'b'
 
@@ -206,16 +206,16 @@ class TestContextMerger:
 
     def test_merge_contexts_empty_list(self):
         """Test merging empty context list."""
-        from wyrdbound_context.merge import ContextMerger
+        from grimoire_context.merge import ContextMerger
 
         with pytest.raises(ContextMergeError, match="Cannot merge empty context list"):
             ContextMerger.merge_contexts([])
 
     def test_merge_with_strategy_last_wins(self):
         """Test merging with last-wins strategy."""
-        from wyrdbound_context.merge import ContextMerger
+        from grimoire_context.merge import ContextMerger
 
-        base = WyrdboundContext({"a": 1})
+        base = GrimoireContext({"a": 1})
         context1 = base.set("b", 2)
         context2 = base.set("b", 3)  # Should win
 
@@ -227,9 +227,9 @@ class TestContextMerger:
 
     def test_merge_with_strategy_first_wins(self):
         """Test merging with first-wins strategy."""
-        from wyrdbound_context.merge import ContextMerger
+        from grimoire_context.merge import ContextMerger
 
-        base = WyrdboundContext({"a": 1})
+        base = GrimoireContext({"a": 1})
         context1 = base.set("b", 2)  # Should win
         context2 = base.set("b", 3)
 
@@ -241,9 +241,9 @@ class TestContextMerger:
 
     def test_execute_parallel_with_strategy(self):
         """Test parallel execution with conflict strategy."""
-        from wyrdbound_context.merge import ContextMerger
+        from grimoire_context.merge import ContextMerger
 
-        context = WyrdboundContext({"base": "value"})
+        context = GrimoireContext({"base": "value"})
 
         def set_result_1(ctx):
             return ctx.set("result", "first")

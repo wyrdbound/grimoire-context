@@ -1,13 +1,13 @@
-# Wyrdbound Context
+# Grimoire Context
 
-[![Tests](https://github.com/wyrdbound/wyrdbound-context/workflows/Tests/badge.svg)](https://github.com/wyrdbound/wyrdbound-context/actions)
+[![Tests](https://github.com/wyrdbound/grimoire-context/workflows/Tests/badge.svg)](https://github.com/wyrdbound/grimoire-context/actions)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red.svg)](LICENSE)
 [![Code style: Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
-**Immutable, hierarchical context management for the Wyrdbound tabletop RPG engine.**
+**Immutable, hierarchical context management for the Grimoire tabletop RPG engine.**
 
-Wyrdbound Context provides a robust, thread-safe context management system designed for complex game state management. It combines the power of immutable data structures with intuitive dict-like interfaces and advanced features like hierarchical scoping and parallel execution.
+Grimoire Context provides a robust, thread-safe context management system designed for complex game state management. It combines the power of immutable data structures with intuitive dict-like interfaces and advanced features like hierarchical scoping and parallel execution.
 
 ## ✨ Features
 
@@ -24,16 +24,16 @@ Wyrdbound Context provides a robust, thread-safe context management system desig
 ### Installation
 
 ```bash
-pip install wyrdbound-context
+pip install grimoire-context
 ```
 
 ### Basic Usage
 
 ```python
-from wyrdbound_context import WyrdboundContext
+from grimoire_context import GrimoireContext
 
 # Create a context with initial data
-context = WyrdboundContext({
+context = GrimoireContext({
     'player': 'Alice',
     'character': {
         'name': 'Aragorn',
@@ -58,8 +58,8 @@ print(list(context.keys()))            # ['player', 'character']
 
 ```python
 # Create parent context (global game state)
-game_state = WyrdboundContext({
-    'system': 'wyrdbound',
+game_state = GrimoireContext({
+    'system': 'grimoire',
     'version': '1.0',
     'difficulty': 'normal'
 })
@@ -71,7 +71,7 @@ player_context = game_state.create_child_context({
 })
 
 # Child inherits from parent
-print(player_context['system'])        # 'wyrdbound' (from parent)
+print(player_context['system'])        # 'grimoire' (from parent)
 print(player_context['player_id'])     # 'alice' (from child)
 
 # Variable shadowing
@@ -83,7 +83,7 @@ print(game_state['difficulty'])        # 'normal' (parent unchanged)
 ### Advanced Path Operations
 
 ```python
-context = WyrdboundContext({
+context = GrimoireContext({
     'character': {
         'stats': {'str': 15, 'dex': 12},
         'inventory': ['sword', 'potion']
@@ -129,7 +129,7 @@ print(result.get_variable('character.hp'))         # 100
 ### Template Resolution
 
 ```python
-from wyrdbound_context import WyrdboundContext
+from grimoire_context import GrimoireContext
 
 class GameTemplateResolver:
     def resolve_template(self, template: str, context_dict: dict) -> str:
@@ -140,7 +140,7 @@ class GameTemplateResolver:
             return str(context_dict.get(var_name, f'<{var_name}>'))
         return re.sub(r'{{(\w+)}}', replace_var, template)
 
-context = WyrdboundContext({'player': 'Alice', 'hp': 75})
+context = GrimoireContext({'player': 'Alice', 'hp': 75})
 context = context.set_template_resolver(GameTemplateResolver())
 
 message = context.resolve_template("{{player}} has {{hp}} health remaining")
@@ -151,10 +151,10 @@ print(message)  # "Alice has 75 health remaining"
 
 ### Immutability
 
-Every operation on a `WyrdboundContext` returns a new instance. The original context is never modified:
+Every operation on a `GrimoireContext` returns a new instance. The original context is never modified:
 
 ```python
-original = WyrdboundContext({'score': 100})
+original = GrimoireContext({'score': 100})
 modified = original.set('score', 200)
 
 print(original['score'])   # 100 (unchanged)
@@ -167,7 +167,7 @@ print(original is modified)  # False
 Each context has a unique identifier that changes when the context is modified:
 
 ```python
-context = WyrdboundContext({'data': 'value'})
+context = GrimoireContext({'data': 'value'})
 original_id = context.context_id
 
 new_context = context.set('data', 'new_value')
@@ -180,7 +180,7 @@ print(original_id != new_id)  # True
 The package provides specific exceptions for different error conditions:
 
 ```python
-from wyrdbound_context import (
+from grimoire_context import (
     InvalidContextOperation,
     ContextMergeError,
     TemplateError
@@ -199,12 +199,12 @@ except TemplateError:
 
 ## 🔧 API Reference
 
-### WyrdboundContext
+### GrimoireContext
 
 #### Constructor
 
 ```python
-WyrdboundContext(data=None, parent=None, template_resolver=None, context_id=None)
+GrimoireContext(data=None, parent=None, template_resolver=None, context_id=None)
 ```
 
 #### Core Methods
@@ -244,8 +244,8 @@ WyrdboundContext(data=None, parent=None, template_resolver=None, context_id=None
 ### Setup
 
 ```bash
-git clone https://github.com/wyrdbound/wyrdbound-context.git
-cd wyrdbound-context
+git clone https://github.com/wyrdbound/grimoire-context.git
+cd grimoire-context
 python -m venv .venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 pip install -e ".[dev]"
@@ -258,7 +258,7 @@ pip install -e ".[dev]"
 pytest
 
 # Run with coverage
-pytest --cov=wyrdbound_context
+pytest --cov=grimoire_context
 
 # Run specific test file
 pytest tests/test_context.py
@@ -296,7 +296,7 @@ If you're interested in collaborating or have questions about the project, pleas
 
 ## 🎯 Use Cases
 
-Wyrdbound Context is particularly well-suited for:
+Grimoire Context is particularly well-suited for:
 
 - **Game State Management**: Track character stats, inventory, and world state
 - **Rule Engine Contexts**: Manage rule evaluation environments with scoping

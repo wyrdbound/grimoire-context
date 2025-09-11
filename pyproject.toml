@@ -3,9 +3,9 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "wyrdbound-context"
+name = "grimoire-context"
 version = "0.0.1"
-description = "Immutable, hierarchical context management for Wyrdbound"
+description = "Immutable, hierarchical context management for Grimoire"
 authors = [{name = "The Wyrd one", email = "wyrdbound@proton.me"}]
 license = {text = "Proprietary"}
 readme = "README.md"
@@ -34,9 +34,9 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/wyrdbound/wyrdbound-context"
-Repository = "https://github.com/wyrdbound/wyrdbound-context"
-Issues = "https://github.com/wyrdbound/wyrdbound-context/issues"
+Homepage = "https://github.com/wyrdbound/grimoire-context"
+Repository = "https://github.com/wyrdbound/grimoire-context"
+Issues = "https://github.com/wyrdbound/grimoire-context/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]

@@ -1,6 +1,6 @@
 """Tests for hierarchical context functionality."""
 
-from wyrdbound_context import WyrdboundContext
+from grimoire_context import GrimoireContext
 
 
 class TestHierarchicalContexts:
@@ -8,7 +8,7 @@ class TestHierarchicalContexts:
 
     def test_create_child_context(self):
         """Test creating child contexts."""
-        parent = WyrdboundContext({"global_var": "global_value"})
+        parent = GrimoireContext({"global_var": "global_value"})
         child = parent.create_child_context({"local_var": "local_value"})
 
         assert child.parent is parent
@@ -20,7 +20,7 @@ class TestHierarchicalContexts:
 
     def test_variable_shadowing(self):
         """Test that child variables shadow parent variables."""
-        parent = WyrdboundContext({"name": "parent_name", "unique": "parent_unique"})
+        parent = GrimoireContext({"name": "parent_name", "unique": "parent_unique"})
         child = parent.create_child_context({"name": "child_name"})
 
         # Child shadows parent's 'name'
@@ -32,7 +32,7 @@ class TestHierarchicalContexts:
 
     def test_multi_level_hierarchy(self):
         """Test multiple levels of context hierarchy."""
-        global_ctx = WyrdboundContext({"system": "knave_1e", "debug": False})
+        global_ctx = GrimoireContext({"system": "knave_1e", "debug": False})
         flow_ctx = global_ctx.create_child_context({"character_name": "Legolas"})
         step_ctx = flow_ctx.create_child_context({"current_roll": 15})
 
@@ -50,7 +50,7 @@ class TestHierarchicalContexts:
 
     def test_child_context_with_initial_data(self):
         """Test creating child with initial data."""
-        parent = WyrdboundContext({"a": 1})
+        parent = GrimoireContext({"a": 1})
         child = parent.create_child_context({"b": 2, "c": 3})
 
         assert len(child) == 3
@@ -60,7 +60,7 @@ class TestHierarchicalContexts:
 
     def test_child_context_id(self):
         """Test child context ID handling."""
-        parent = WyrdboundContext(context_id="parent")
+        parent = GrimoireContext(context_id="parent")
         child1 = parent.create_child_context()
         child2 = parent.create_child_context(context_id="custom-child")
 
@@ -72,7 +72,7 @@ class TestHierarchicalContexts:
         from tests.test_context import MockTemplateResolver
 
         resolver = MockTemplateResolver()
-        parent = WyrdboundContext({"name": "Aragorn"}).set_template_resolver(resolver)
+        parent = GrimoireContext({"name": "Aragorn"}).set_template_resolver(resolver)
         child = parent.create_child_context({"title": "King"})
 
         # Child inherits resolver
@@ -84,7 +84,7 @@ class TestHierarchicalContexts:
 
     def test_immutable_operations_on_child(self):
         """Test immutable operations preserve hierarchy."""
-        parent = WyrdboundContext({"parent_var": "parent_value"})
+        parent = GrimoireContext({"parent_var": "parent_value"})
         child = parent.create_child_context({"child_var": "child_value"})
 
         # Update child
@@ -101,11 +101,11 @@ class TestHierarchicalContexts:
 
     def test_path_operations_in_hierarchy(self):
         """Test path operations work correctly in hierarchy."""
-        parent = WyrdboundContext({"config": {"system": "wyrdbound"}})
+        parent = GrimoireContext({"config": {"system": "grimoire"}})
         child = parent.create_child_context({"character": {"name": "Frodo"}})
 
         # Can access parent paths
-        assert child.get_variable("config.system") == "wyrdbound"
+        assert child.get_variable("config.system") == "grimoire"
 
         # Can access child paths
         assert child.get_variable("character.name") == "Frodo"
@@ -119,7 +119,7 @@ class TestHierarchicalContexts:
 
     def test_deep_hierarchy_chain_view(self):
         """Test chain view works with deep hierarchies."""
-        level1 = WyrdboundContext({"l1": "value1"})
+        level1 = GrimoireContext({"l1": "value1"})
         level2 = level1.create_child_context({"l2": "value2"})
         level3 = level2.create_child_context({"l3": "value3"})
         level4 = level3.create_child_context({"l4": "value4"})
@@ -135,7 +135,7 @@ class TestHierarchicalContexts:
 
     def test_variable_shadowing_with_paths(self):
         """Test variable shadowing with nested paths."""
-        parent = WyrdboundContext({"character": {"name": "Aragorn", "hp": 100}})
+        parent = GrimoireContext({"character": {"name": "Aragorn", "hp": 100}})
         child = parent.create_child_context({"character": {"name": "Legolas"}})
 
         # Child completely shadows parent's 'character'
