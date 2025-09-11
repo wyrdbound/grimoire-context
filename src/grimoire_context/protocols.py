@@ -1,4 +1,4 @@
-"""Protocol definitions for Wyrdbound Context package."""
+"""Protocol definitions for Grimoire Context package."""
 
 from typing import Any, Dict, Protocol
 
@@ -7,7 +7,7 @@ class TemplateResolver(Protocol):
     """Protocol for injected template resolvers.
 
     This protocol defines the interface that template resolvers must implement
-    to be used with WyrdboundContext. It allows for dependency injection of
+    to be used with GrimoireContext. It allows for dependency injection of
     template resolution functionality without coupling the context to specific
     template engines.
     """

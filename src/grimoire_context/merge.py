@@ -9,7 +9,7 @@ from .logging import get_logger
 logger = get_logger(__name__)
 
 if TYPE_CHECKING:
-    from .context import WyrdboundContext
+    from .context import GrimoireContext
 
 
 def _get_modification_paths(
@@ -96,7 +96,7 @@ class ContextMerger:
     """Utilities for merging parallel context modifications."""
 
     @staticmethod
-    def merge_contexts(contexts: List["WyrdboundContext"]) -> "WyrdboundContext":
+    def merge_contexts(contexts: List["GrimoireContext"]) -> "GrimoireContext":
         """Merge multiple contexts with simple merging (no conflict detection).
 
         This method merges the local data from multiple contexts into a single
@@ -104,10 +104,10 @@ class ContextMerger:
         It does NOT check for conflicts - use merge_contexts_with_base for that.
 
         Args:
-            contexts: List of WyrdboundContext instances to merge
+            contexts: List of GrimoireContext instances to merge
 
         Returns:
-            New WyrdboundContext with merged data
+            New GrimoireContext with merged data
 
         Raises:
             ContextMergeError: If contexts list is empty
@@ -142,9 +142,9 @@ class ContextMerger:
         merged_data = pmap(merged_dict)
 
         # Import here to avoid circular imports
-        from .context import WyrdboundContext
+        from .context import GrimoireContext
 
-        return WyrdboundContext(
+        return GrimoireContext(
             merged_data,
             base_context._parent,
             base_context._template_resolver,
@@ -153,8 +153,8 @@ class ContextMerger:
 
     @staticmethod
     def merge_contexts_with_strategy(
-        contexts: List["WyrdboundContext"], conflict_strategy: str = "error"
-    ) -> "WyrdboundContext":
+        contexts: List["GrimoireContext"], conflict_strategy: str = "error"
+    ) -> "GrimoireContext":
         """Merge contexts with different conflict resolution strategies.
 
         Args:
@@ -165,7 +165,7 @@ class ContextMerger:
                 - 'first_wins': Earlier contexts take precedence
 
         Returns:
-            New WyrdboundContext with merged data
+            New GrimoireContext with merged data
 
         Raises:
             ContextMergeError: If invalid strategy or other merge issues
@@ -203,9 +203,9 @@ class ContextMerger:
                 merged_data = merged_data.set(key, value)
 
         # Import here to avoid circular imports
-        from .context import WyrdboundContext
+        from .context import GrimoireContext
 
-        return WyrdboundContext(
+        return GrimoireContext(
             merged_data,
             base_context._parent,
             base_context._template_resolver,
@@ -214,18 +214,18 @@ class ContextMerger:
 
     @staticmethod
     def merge_contexts_with_base(
-        contexts: List["WyrdboundContext"], base_context: "WyrdboundContext"
-    ) -> "WyrdboundContext":
+        contexts: List["GrimoireContext"], base_context: "GrimoireContext"
+    ) -> "GrimoireContext":
         """Merge multiple contexts with knowledge of the original base context.
 
         This method can detect what was actually modified by comparing to the base.
 
         Args:
-            contexts: List of WyrdboundContext instances to merge
+            contexts: List of GrimoireContext instances to merge
             base_context: The original context that all operations started from
 
         Returns:
-            New WyrdboundContext with merged data
+            New GrimoireContext with merged data
 
         Raises:
             ContextMergeError: If contexts list is empty or if key conflicts exist
@@ -266,9 +266,9 @@ class ContextMerger:
 
     @staticmethod
     def execute_parallel_operations(
-        base_context: "WyrdboundContext",
-        operations: List[Callable[["WyrdboundContext"], "WyrdboundContext"]],
-    ) -> "WyrdboundContext":
+        base_context: "GrimoireContext",
+        operations: List[Callable[["GrimoireContext"], "GrimoireContext"]],
+    ) -> "GrimoireContext":
         """Execute operations in parallel and merge results.
 
         This method runs multiple context operations concurrently using a thread pool
@@ -276,10 +276,10 @@ class ContextMerger:
 
         Args:
             base_context: Starting context for all operations
-            operations: List of functions that take and return WyrdboundContext
+            operations: List of functions that take and return GrimoireContext
 
         Returns:
-            New WyrdboundContext with merged results from all operations
+            New GrimoireContext with merged results from all operations
 
         Raises:
             ContextMergeError: If operations fail or merging fails
@@ -315,19 +315,19 @@ class ContextMerger:
 
     @staticmethod
     def execute_parallel_with_strategy(
-        base_context: "WyrdboundContext",
-        operations: List[Callable[["WyrdboundContext"], "WyrdboundContext"]],
+        base_context: "GrimoireContext",
+        operations: List[Callable[["GrimoireContext"], "GrimoireContext"]],
         conflict_strategy: str = "error",
-    ) -> "WyrdboundContext":
+    ) -> "GrimoireContext":
         """Execute operations in parallel with conflict resolution strategy.
 
         Args:
             base_context: Starting context for all operations
-            operations: List of functions that take and return WyrdboundContext
+            operations: List of functions that take and return GrimoireContext
             conflict_strategy: How to handle merge conflicts
 
         Returns:
-            New WyrdboundContext with merged results
+            New GrimoireContext with merged results
 
         Raises:
             ContextMergeError: If operations fail or merging fails

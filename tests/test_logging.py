@@ -6,13 +6,13 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from wyrdbound_context import WyrdboundContext
-from wyrdbound_context.exceptions import (
+from grimoire_context import GrimoireContext
+from grimoire_context.exceptions import (
     ContextMergeError,
     PathResolutionError,
     TemplateError,
 )
-from wyrdbound_context.logging import get_logger, inject_logger
+from grimoire_context.logging import get_logger, inject_logger
 
 
 class MockLogger:
@@ -46,7 +46,7 @@ class TestLoggingInjection:
 
     def test_default_logger_creation(self):
         """Test that get_logger returns a logger proxy by default."""
-        from wyrdbound_context.logging import LoggerProxy
+        from grimoire_context.logging import LoggerProxy
 
         logger = get_logger("test_module")
         assert isinstance(logger, LoggerProxy)
@@ -58,7 +58,7 @@ class TestLoggingInjection:
 
     def test_logger_injection(self):
         """Test injecting a custom logger."""
-        from wyrdbound_context.logging import LoggerProxy
+        from grimoire_context.logging import LoggerProxy
 
         mock_logger = MockLogger()
 
@@ -104,14 +104,14 @@ class TestLoggingInjection:
 
         try:
             # Create a context
-            context = WyrdboundContext({"key1": "value1", "key2": "value2"})
+            context = GrimoireContext({"key1": "value1", "key2": "value2"})
 
             # Should have logged context creation
             assert len(mock_logger.debug_calls) >= 1
 
             # Check that the log message contains expected content
             creation_log = mock_logger.debug_calls[0]
-            assert "Created WyrdboundContext" in creation_log
+            assert "Created GrimoireContext" in creation_log
             assert "2 local keys" in creation_log
             assert context.context_id in creation_log
 
@@ -126,7 +126,7 @@ class TestLoggingInjection:
 
         try:
             # Create parent context
-            parent = WyrdboundContext({"parent_key": "parent_value"})
+            parent = GrimoireContext({"parent_key": "parent_value"})
             mock_logger.debug_calls.clear()  # Clear creation logs
 
             # Create child context
@@ -135,7 +135,7 @@ class TestLoggingInjection:
             # Should have logged child creation
             assert len(mock_logger.debug_calls) >= 1
             creation_log = mock_logger.debug_calls[0]
-            assert "Created WyrdboundContext" in creation_log
+            assert "Created GrimoireContext" in creation_log
             assert "with parent" in creation_log
 
         finally:
@@ -151,7 +151,7 @@ class TestLoggingInjection:
             mock_resolver = Mock()
             mock_resolver.resolve_template.return_value = "resolved_value"
 
-            context = WyrdboundContext({"var": "test"}, template_resolver=mock_resolver)
+            context = GrimoireContext({"var": "test"}, template_resolver=mock_resolver)
             mock_logger.debug_calls.clear()  # Clear creation logs
 
             # Resolve a template
@@ -177,7 +177,7 @@ class TestLoggingInjection:
             mock_resolver = Mock()
             mock_resolver.resolve_template.side_effect = Exception("Template error")
 
-            context = WyrdboundContext({"var": "test"}, template_resolver=mock_resolver)
+            context = GrimoireContext({"var": "test"}, template_resolver=mock_resolver)
             mock_logger.debug_calls.clear()
             mock_logger.error_calls.clear()
 
@@ -200,7 +200,7 @@ class TestLoggingInjection:
         inject_logger(mock_logger)
 
         try:
-            context = WyrdboundContext({"var": "test"})
+            context = GrimoireContext({"var": "test"})
             mock_logger.error_calls.clear()
 
             # Try to resolve template without resolver
@@ -215,14 +215,14 @@ class TestLoggingInjection:
 
     def test_merge_conflict_logging(self):
         """Test logging when merge conflicts are detected."""
-        from wyrdbound_context.merge import ContextMerger
+        from grimoire_context.merge import ContextMerger
 
         mock_logger = MockLogger()
         inject_logger(mock_logger)
 
         try:
             # Create contexts that will conflict
-            base_context = WyrdboundContext({"shared_key": "original"})
+            base_context = GrimoireContext({"shared_key": "original"})
             context1 = base_context.set("shared_key", "value1")
             context2 = base_context.set("shared_key", "value2")
 
@@ -246,7 +246,7 @@ class TestLoggingInjection:
         """Test logging when path resolution fails."""
         from pyrsistent import pmap
 
-        from wyrdbound_context.path_resolver import set_nested_path
+        from grimoire_context.path_resolver import set_nested_path
 
         mock_logger = MockLogger()
         inject_logger(mock_logger)
@@ -257,7 +257,7 @@ class TestLoggingInjection:
             # Create a scenario that will cause a path resolution error
             # This is a bit tricky since the path resolver is quite robust
             # Let's patch something to force an error
-            with patch("wyrdbound_context.path_resolver.pmap") as mock_pmap:
+            with patch("grimoire_context.path_resolver.pmap") as mock_pmap:
                 mock_pmap.side_effect = Exception("Forced error")
 
                 with pytest.raises(PathResolutionError):
@@ -279,7 +279,7 @@ class TestLoggingInjection:
         handler.setLevel(logging.DEBUG)
 
         # Create a logger and add our handler
-        test_logger = logging.getLogger("wyrdbound_context.test")
+        test_logger = logging.getLogger("grimoire_context.test")
         test_logger.setLevel(logging.DEBUG)
         test_logger.addHandler(handler)
 
@@ -288,7 +288,7 @@ class TestLoggingInjection:
             inject_logger(None)  # Use standard logging
 
             # Create context which should log via standard logging
-            context = WyrdboundContext({"test": "value"})
+            context = GrimoireContext({"test": "value"})
 
             # The actual logging goes to the module's logger, not our test logger
             # So we can't easily capture it, but we can verify no exceptions occur
@@ -306,7 +306,7 @@ class TestLoggingThreadSafety:
         """Test for race conditions in logger registry creation."""
         import threading
 
-        from wyrdbound_context.logging import _logger_instances
+        from grimoire_context.logging import _logger_instances
 
         # Clear any existing instances
         inject_logger(None)
@@ -422,7 +422,7 @@ class TestLoggingThreadSafety:
         """Test for dictionary corruption during concurrent access."""
         import threading
 
-        from wyrdbound_context.logging import _logger_instances
+        from grimoire_context.logging import _logger_instances
 
         # Clear registry
         inject_logger(None)
@@ -449,7 +449,7 @@ class TestLoggingThreadSafety:
                             _logger_instances[shared_key]
 
                         # Create new instance (might conflict with other threads)
-                        from wyrdbound_context.logging import LoggerProxy
+                        from grimoire_context.logging import LoggerProxy
 
                         new_proxy = LoggerProxy(shared_key)
                         _logger_instances[shared_key] = new_proxy

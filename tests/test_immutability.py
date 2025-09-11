@@ -1,6 +1,6 @@
 """Tests for immutability guarantees."""
 
-from wyrdbound_context import WyrdboundContext
+from grimoire_context import GrimoireContext
 
 
 class TestImmutabilityGuarantees:
@@ -9,7 +9,7 @@ class TestImmutabilityGuarantees:
     def test_original_data_unchanged_after_set(self):
         """Test that original context data is unchanged after set operations."""
         original_data = {"character": {"name": "Aragorn", "hp": 100}}
-        context = WyrdboundContext(original_data)
+        context = GrimoireContext(original_data)
 
         # Modify context
         new_context = context.set("new_key", "new_value")
@@ -25,7 +25,7 @@ class TestImmutabilityGuarantees:
     def test_original_data_unchanged_after_path_set(self):
         """Test that original data unchanged after path operations."""
         original_data = {"character": {"name": "Aragorn", "hp": 100}}
-        context = WyrdboundContext(original_data)
+        context = GrimoireContext(original_data)
 
         # Modify nested path
         new_context = context.set_variable("character.hp", 90)
@@ -38,7 +38,7 @@ class TestImmutabilityGuarantees:
     def test_original_data_unchanged_after_update(self):
         """Test that update operations don't modify original."""
         original_data = {"a": 1, "b": 2}
-        context = WyrdboundContext(original_data)
+        context = GrimoireContext(original_data)
 
         # Update context
         updates = {"b": 20, "c": 3}
@@ -56,7 +56,7 @@ class TestImmutabilityGuarantees:
     def test_original_data_unchanged_after_discard(self):
         """Test that discard operations don't modify original."""
         original_data = {"a": 1, "b": 2, "c": 3}
-        context = WyrdboundContext(original_data)
+        context = GrimoireContext(original_data)
 
         # Remove key
         new_context = context.discard("b")
@@ -75,7 +75,7 @@ class TestImmutabilityGuarantees:
         nested_list = [1, 2, 3]
         nested_dict = {"inner": "value"}
 
-        context = WyrdboundContext({"list": nested_list, "dict": nested_dict})
+        context = GrimoireContext({"list": nested_list, "dict": nested_dict})
 
         # Modify context with new nested data
         new_context = context.set_variable("list", [4, 5, 6])
@@ -87,7 +87,7 @@ class TestImmutabilityGuarantees:
 
     def test_child_context_immutability(self):
         """Test that child contexts maintain immutability."""
-        parent = WyrdboundContext({"parent_var": "parent_value"})
+        parent = GrimoireContext({"parent_var": "parent_value"})
         child = parent.create_child_context({"child_var": "child_value"})
 
         # Modify child
@@ -104,7 +104,7 @@ class TestImmutabilityGuarantees:
 
     def test_copy_creates_independent_contexts(self):
         """Test that copies are independent."""
-        original = WyrdboundContext({"shared": "value"})
+        original = GrimoireContext({"shared": "value"})
         copy = original.copy()
 
         # Modify copy
@@ -126,7 +126,7 @@ class TestImmutabilityGuarantees:
         resolver1 = MockTemplateResolver()
         resolver2 = MockTemplateResolver()
 
-        context = WyrdboundContext({"var": "value"})
+        context = GrimoireContext({"var": "value"})
         context_with_resolver1 = context.set_template_resolver(resolver1)
         context_with_resolver2 = context_with_resolver1.set_template_resolver(resolver2)
 
@@ -148,7 +148,7 @@ class TestImmutabilityGuarantees:
             for i in range(100)
         }
 
-        context = WyrdboundContext(large_data)
+        context = GrimoireContext(large_data)
 
         # Make several modifications
         context1 = context.set("new_key", "new_value")
@@ -174,7 +174,7 @@ class TestImmutabilityGuarantees:
                 "equipment": ["sword", "shield"],
             }
         }
-        context = WyrdboundContext(data)
+        context = GrimoireContext(data)
 
         # Delete nested variable
         context_after_delete = context.delete_variable("character.stats.hp")
