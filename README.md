@@ -2,7 +2,7 @@
 
 [![Tests](https://github.com/wyrdbound/grimoire-context/workflows/Tests/badge.svg)](https://github.com/wyrdbound/grimoire-context/actions)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
-[![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Code style: Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
 **Immutable, hierarchical context management for the Grimoire tabletop RPG engine.**
@@ -282,17 +282,17 @@ mypy src/
 
 ## 📄 License
 
-This project is proprietary software. All rights reserved to The Wyrd one.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-No part of this software may be reproduced, distributed, or transmitted without prior written permission. See the [LICENSE](LICENSE) file for complete terms and conditions.
-
-For licensing inquiries, please contact: wyrdbound@proton.me
+Copyright (c) 2025 The Wyrd One
 
 ## 🤝 Contributing
 
-This is a private, proprietary project. Contributions are currently limited to authorized collaborators only.
+Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
 
-If you're interested in collaborating or have questions about the project, please contact: wyrdbound@proton.me
+Please make sure to update tests as appropriate and follow the existing code style.
+
+If you have questions about the project, please contact: wyrdbound@proton.me
 
 ## 🎯 Use Cases
 
@@ -320,7 +320,3 @@ The package is built on several key components:
 - **Thread Safe**: Immutable design eliminates race conditions
 - **Scalable**: Hierarchical design supports deep context chains efficiently
 - **Optimized Paths**: Dot notation operations are optimized for common access patterns
-
----
-
-**Copyright (c) 2025 The Wyrd One**
