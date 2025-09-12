@@ -7,7 +7,7 @@ from pyrsistent import PMap, pmap
 from .exceptions import PathResolutionError
 from .logging import get_logger
 
-logger = get_logger(__name__)
+logger = get_logger("path_resolver")
 
 
 def get_nested_path(
@@ -73,7 +73,10 @@ def set_nested_path(data: PMap[str, Any], path: str, value: Any) -> PMap[str, An
         parts = path.split(".")
         if len(parts) == 1:
             # Simple case: set at root level
+            logger.debug(f"Setting root-level variable '{parts[0]}'")
             return data.set(parts[0], value)
+
+        logger.debug(f"Setting nested path '{path}' with {len(parts)} levels")
 
         # Handle nested path
         key = parts[0]
@@ -83,6 +86,9 @@ def set_nested_path(data: PMap[str, Any], path: str, value: Any) -> PMap[str, An
         nested = data.get(key, {})
         if not isinstance(nested, (dict, PMap)):
             # Overwrite non-dict value with new nested structure
+            logger.warning(
+                f"Overwriting non-dict value at '{key}' to create nested path '{path}'"
+            )
             nested = {}
 
         # Convert to PMap if needed and recursively set
@@ -93,7 +99,6 @@ def set_nested_path(data: PMap[str, Any], path: str, value: Any) -> PMap[str, An
         return data.set(key, dict(updated_nested))
 
     except Exception as e:
-        # Example logging for error cases
         logger.error(f"Failed to set nested path '{path}': {e}")
         raise PathResolutionError(f"Failed to set path '{path}': {e}") from e
 

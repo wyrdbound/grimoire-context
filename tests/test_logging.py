@@ -45,31 +45,27 @@ class TestLoggingInjection:
     """Test logging injection and configuration."""
 
     def test_default_logger_creation(self):
-        """Test that get_logger returns a logger proxy by default."""
-        from grimoire_context.logging import LoggerProxy
-
+        """Test that get_logger returns a logger that implements the protocol."""
         logger = get_logger("test_module")
-        assert isinstance(logger, LoggerProxy)
+
         # Verify it has the required methods
         assert hasattr(logger, "debug")
         assert hasattr(logger, "info")
         assert hasattr(logger, "warning")
         assert hasattr(logger, "error")
+        assert hasattr(logger, "critical")
 
     def test_logger_injection(self):
         """Test injecting a custom logger."""
-        from grimoire_context.logging import LoggerProxy
-
         mock_logger = MockLogger()
 
         # Inject the custom logger
         inject_logger(mock_logger)
 
-        # Get logger should return a proxy that delegates to our mock
+        # Get logger should work with injected logger
         logger = get_logger("test_module")
-        assert isinstance(logger, LoggerProxy)
 
-        # Test that the proxy delegates to our injected logger
+        # Test that the logger delegates to our injected logger
         logger.debug("test message")
         assert "test message" in mock_logger.debug_calls
 
@@ -302,44 +298,34 @@ class TestLoggingInjection:
 class TestLoggingThreadSafety:
     """Test that logging injection is thread-safe."""
 
-    def test_concurrent_logger_registry_race_condition(self):
-        """Test for race conditions in logger registry creation."""
+    def test_concurrent_logger_access(self):
+        """Test that logger access is thread-safe with grimoire-logging."""
         import threading
-
-        from grimoire_context.logging import _logger_instances
-
-        # Clear any existing instances
-        inject_logger(None)
-        _logger_instances.clear()
 
         results = []
         errors = []
-        logger_instances = []
 
-        def aggressive_worker(worker_id: int):
+        def worker(worker_id: int):
             try:
-                # Rapidly create and access the same logger name from multiple threads
-                # This should expose race conditions in registry access
-                for _ in range(1000):
-                    logger = get_logger("shared_logger_name")
-                    logger_instances.append(logger)
+                # Access logger from multiple threads
+                logger = get_logger(f"worker_{worker_id}")
 
-                    # Verify it's always the same instance (should fail without locking)
-                    logger2 = get_logger("shared_logger_name")
-                    if logger is not logger2:
-                        errors.append(f"Worker {worker_id}: Got different instances!")
+                # Perform logging operations
+                for i in range(100):
+                    logger.debug(f"Worker {worker_id} message {i}")
+                    logger.info(f"Worker {worker_id} info {i}")
 
                 results.append(worker_id)
             except Exception as e:
                 errors.append(f"Worker {worker_id}: {str(e)}")
 
-        # Use many threads with no delays to maximize contention
+        # Use multiple threads
         threads = []
-        for i in range(50):
-            thread = threading.Thread(target=aggressive_worker, args=(i,))
+        for i in range(20):
+            thread = threading.Thread(target=worker, args=(i,))
             threads.append(thread)
 
-        # Start all threads simultaneously
+        # Start all threads
         for thread in threads:
             thread.start()
 
@@ -347,13 +333,8 @@ class TestLoggingThreadSafety:
         for thread in threads:
             thread.join()
 
-        # All instances for the same name should be identical
-        shared_logger = get_logger("shared_logger_name")
-        for instance in logger_instances:
-            assert instance is shared_logger, "Registry created multiple instances!"
-
-        assert len(errors) == 0, f"Race condition detected: {errors}"
-        assert len(results) == 50
+        assert len(errors) == 0, f"Errors occurred: {errors}"
+        assert len(results) == 20
 
     def test_logger_injection_race_condition(self):
         """Test for race conditions during logger injection."""
@@ -418,81 +399,50 @@ class TestLoggingThreadSafety:
         assert len(injection_results) == 3
         assert len(access_results) == 10
 
-    def test_dictionary_corruption_race_condition(self):
-        """Test for dictionary corruption during concurrent access."""
+    def test_concurrent_logger_injection(self):
+        """Test that logger injection works safely in concurrent environment."""
         import threading
 
-        from grimoire_context.logging import _logger_instances
-
-        # Clear registry
-        inject_logger(None)
-        _logger_instances.clear()
-
+        mock_logger = MockLogger()
         errors = []
-        exception_count = 0
+        results = []
 
-        def dictionary_corruptor(worker_id: int):
-            """Aggressively corrupt the dictionary to demonstrate race conditions."""
-            nonlocal exception_count
+        def worker(worker_id: int):
+            """Worker that performs logging operations."""
             try:
-                # Rapidly create, check, and modify the same key
-                shared_key = "shared_logger_key"
-                for i in range(5000):
-                    try:
-                        # This sequence without locking can cause:
-                        # - KeyError if key is deleted between check and access
-                        # - RuntimeError if dictionary changes size during iteration
-                        # - Inconsistent state with different thread views
+                logger = get_logger(f"concurrent_worker_{worker_id}")
 
-                        if shared_key in _logger_instances:
-                            # Another thread might delete this between check and access
-                            _logger_instances[shared_key]
+                # Perform logging operations
+                for i in range(10):
+                    logger.info(f"Worker {worker_id} operation {i}")
+                    logger.debug(f"Worker {worker_id} debug {i}")
 
-                        # Create new instance (might conflict with other threads)
-                        from grimoire_context.logging import LoggerProxy
-
-                        new_proxy = LoggerProxy(shared_key)
-                        _logger_instances[shared_key] = new_proxy
-
-                        # Verify it's still there (might fail due to race)
-                        if shared_key in _logger_instances:
-                            retrieved = _logger_instances[shared_key]
-                            if retrieved is not new_proxy:
-                                msg = f"W{worker_id}: Proxy changed at iter {i}"
-                                errors.append(msg)
-
-                    except (KeyError, RuntimeError, ValueError) as e:
-                        # These exceptions indicate race conditions in dictionary access
-                        exception_count += 1
-                        if exception_count < 10:  # Don't spam too many error messages
-                            msg = f"W{worker_id}: Race {type(e).__name__}: {e}"
-                            errors.append(msg)
-
+                results.append(worker_id)
             except Exception as e:
-                errors.append(f"Worker {worker_id}: Unexpected error: {str(e)}")
+                errors.append(f"Worker {worker_id}: {str(e)}")
 
-        # Many threads simultaneously corrupting the dictionary
-        threads = []
-        for i in range(20):  # High concurrency
-            thread = threading.Thread(target=dictionary_corruptor, args=(i,))
-            threads.append(thread)
+        # Inject logger before starting threads
+        inject_logger(mock_logger)
 
-        # Start all threads simultaneously to maximize contention
-        for thread in threads:
-            thread.start()
+        try:
+            # Start multiple threads
+            threads = []
+            for i in range(10):
+                thread = threading.Thread(target=worker, args=(i,))
+                threads.append(thread)
 
-        # Wait for all to complete
-        for thread in threads:
-            thread.join()
+            for thread in threads:
+                thread.start()
 
-        # Without proper locking, we expect to see race condition exceptions
-        # If no exceptions occurred, the test might not be aggressive enough
-        if exception_count == 0 and len(errors) == 0:
-            # This suggests either the race condition is very rare or not occurring
-            # Let's be lenient for now but document this
-            print(f"\nWARNING: No race conditions detected in {20 * 5000} operations")
-            print("Race condition might be rare or test needs to be more aggressive")
+            for thread in threads:
+                thread.join()
 
-        # For now, just verify no unexpected errors occurred
-        unexpected_errors = [e for e in errors if "Unexpected error:" in e]
-        assert len(unexpected_errors) == 0, f"Unexpected errors: {unexpected_errors}"
+            assert len(errors) == 0, f"Concurrent errors: {errors}"
+            assert len(results) == 10
+
+            # Should have captured messages from all workers
+            assert len(mock_logger.info_calls) > 0
+            assert len(mock_logger.debug_calls) > 0
+
+        finally:
+            inject_logger(None)

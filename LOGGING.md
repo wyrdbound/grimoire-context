@@ -1,119 +1,158 @@
-# Logging in Grimoire Context
+# Logging Configuration for Grimoire Context
 
-This document describes how to configure and use logging in the `grimoire-context` library.
+The `grimoire-context` library uses `grimoire-logging` for flexible logging with dependency injection capabilities. This allows you to easily inject custom logger implementations or use standard Python logging.
 
 ## Overview
 
-The `grimoire-context` library uses dependency injection for logging, allowing applications to choose their preferred logging implementation. You can either use the standard Python `logging` module or inject your own custom logger implementation.
+The `grimoire-context` library provides comprehensive logging throughout its operations using the `grimoire_context` logger namespace with child loggers for different components. All logging uses the `grimoire-logging` package, which provides:
 
-## Basic Usage
+- **Dependency Injection**: Inject custom logger implementations at runtime
+- **Thread Safety**: All operations are thread-safe for concurrent environments
+- **Fallback Support**: Automatically falls back to Python's standard logging
+- **Zero Dependencies**: Core functionality requires no external dependencies beyond grimoire-logging
+- **Protocol-Based**: Clean interface definition using Python protocols
 
-### Using Standard Python Logging
+## Quick Setup
 
-By default, the library uses Python's standard `logging` module:
+The library uses the logger namespace `grimoire_context` with child loggers for different components. You can configure logging in several ways:
+
+### Method 1: Standard Python Logging (Default)
+
+By default, grimoire-context falls back to Python's standard logging. Configure it before importing the library:
 
 ```python
 import logging
-from grimoire_context import GrimoireContext
+import sys
 
 # Configure standard logging
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger('grimoire_context')
-logger.setLevel(logging.DEBUG)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[logging.StreamHandler(sys.stdout)]
+)
 
-# Create context - will log using standard logging
-context = GrimoireContext({'key': 'value'})
+# Optionally adjust the grimoire-context logger level
+logging.getLogger('grimoire_context').setLevel(logging.DEBUG)
+
+# Now import and use the library
+from grimoire_context import GrimoireContext
+context = GrimoireContext({'player': 'Alice'})
 ```
 
-### Injecting a Custom Logger
+### Method 2: Dependency Injection with Custom Logger
 
-You can inject your own logger implementation that follows the `LoggerProtocol`:
+Use grimoire-logging's dependency injection to provide your own logger implementation:
 
 ```python
-from grimoire_context import inject_logger, LoggerProtocol, GrimoireContext
+from grimoire_context import inject_logger, GrimoireContext
 
-class MyLogger:
-    def debug(self, message: str) -> None:
-        print(f"DEBUG: {message}")
+# Create a custom logger
+class MyCustomLogger:
+    def debug(self, msg: str, *args, **kwargs) -> None:
+        print(f"🐛 DEBUG: {msg}")
 
-    def info(self, message: str) -> None:
-        print(f"INFO: {message}")
+    def info(self, msg: str, *args, **kwargs) -> None:
+        print(f"📝 INFO: {msg}")
 
-    def warning(self, message: str) -> None:
-        print(f"WARNING: {message}")
+    def warning(self, msg: str, *args, **kwargs) -> None:
+        print(f"⚠️ WARNING: {msg}")
 
-    def error(self, message: str) -> None:
-        print(f"ERROR: {message}")
+    def error(self, msg: str, *args, **kwargs) -> None:
+        print(f"❌ ERROR: {msg}")
+
+    def critical(self, msg: str, *args, **kwargs) -> None:
+        print(f"💀 CRITICAL: {msg}")
 
 # Inject your custom logger
-inject_logger(MyLogger())
+inject_logger(MyCustomLogger())
 
-# Now all logging will use your custom logger
-context = GrimoireContext({'key': 'value'})
+# All grimoire-context logging now uses your custom logger
+context = GrimoireContext({'game': 'RPG'})
 ```
 
-### Resetting to Standard Logging
+### Method 3: Adapter Pattern for Integration
 
-To return to standard Python logging:
+Create an adapter to integrate with your existing logging infrastructure:
 
 ```python
+import logging
 from grimoire_context import inject_logger
 
-# Reset to standard logging
-inject_logger(None)
+class StandardLoggingAdapter:
+    """Adapter to use your existing Python logging setup."""
+
+    def __init__(self, logger_name: str = "myapp.grimoire_context"):
+        self.logger = logging.getLogger(logger_name)
+
+    def debug(self, msg: str, *args, **kwargs) -> None:
+        self.logger.debug(msg, *args, **kwargs)
+
+    def info(self, msg: str, *args, **kwargs) -> None:
+        self.logger.info(msg, *args, **kwargs)
+
+    def warning(self, msg: str, *args, **kwargs) -> None:
+        self.logger.warning(msg, *args, **kwargs)
+
+    def error(self, msg: str, *args, **kwargs) -> None:
+        self.logger.error(msg, *args, **kwargs)
+
+    def critical(self, msg: str, *args, **kwargs) -> None:
+        self.logger.critical(msg, *args, **kwargs)
+
+# Use your existing logging configuration
+inject_logger(StandardLoggingAdapter())
 ```
 
-## Logger Protocol
+## Logger Hierarchy
 
-Custom loggers must implement the `LoggerProtocol` interface:
+The library uses the following logger hierarchy (all under the `grimoire_context` namespace):
+
+- `grimoire_context` - Root library logger
+- `grimoire_context.context` - Context operations and lifecycle
+- `grimoire_context.merge` - Context merging and parallel execution
+- `grimoire_context.path_resolver` - Nested path operations and resolution
+
+You can configure individual subsystems by getting their specific loggers:
 
 ```python
-from typing import Protocol
+import logging
 
-class LoggerProtocol(Protocol):
-    def debug(self, message: str) -> None: ...
-    def info(self, message: str) -> None: ...
-    def warning(self, message: str) -> None: ...
-    def error(self, message: str) -> None: ...
+# Configure different levels for different components
+logging.getLogger('grimoire_context.context').setLevel(logging.DEBUG)
+logging.getLogger('grimoire_context.merge').setLevel(logging.INFO)
+logging.getLogger('grimoire_context.path_resolver').setLevel(logging.WARNING)
 ```
 
 ## What Gets Logged
 
-The library logs the following events:
+The library logs messages at appropriate levels for different operational scenarios:
 
-### Debug Level
+### INFO Level Messages
 
-- **Context Creation**: When new contexts are created
+- **System Initialization**: `"Grimoire Context system initialized with N initial variables"`
+- **Parallel Operations**: `"Successfully executed N parallel operations and merged results"`
 
-  ```
-  Created GrimoireContext 'abc123' with 2 local keys
-  Created GrimoireContext 'def456' with 1 local keys (with parent)
-  ```
+### DEBUG Level Messages
 
-- **Template Resolution**: When templates are being resolved
-  ```
-  Resolving template in context 'abc123': Hello {{name}}
-  ```
+- **Context Creation**: `"Created GrimoireContext 'abc123' with 2 local keys"`
+- **Child Context Creation**: `"Created child context 'def456' with 3 variables from parent 'abc123'"`
+- **Template Resolution**: `"Resolving template in context 'abc123': Hello {{name}}"`
+- **Variable Operations**: `"Setting nested path 'player.stats.hp' with 3 levels"`
+- **Bulk Updates**: `"Bulk update of 10 variables in context 'abc123'"`
+- **Template Resolver Changes**: `"Template resolver set for context 'abc123': JinjaResolver"`
+- **Merge Strategy**: `"Merging 3 contexts with 'last_wins' conflict strategy"`
 
-### Warning Level
+### WARNING Level Messages
 
-- **Merge Conflicts**: When parallel operations conflict
-  ```
-  Path conflicts detected in parallel merge: ['shared_key', 'nested.value']
-  ```
+- **Missing Variables**: `"Requested variable 'player.missing' not found in context 'abc123', returning None"`
+- **Path Overwrites**: `"Overwriting non-dict value at 'config' to create nested path 'config.setting'"`
+- **Merge Conflicts**: `"Path conflicts detected in parallel merge: ['shared_key', 'nested.value']"`
 
-### Error Level
+### ERROR Level Messages
 
-- **Template Resolution Failures**: When template resolution fails
-
-  ```
-  Template resolution failed in context 'abc123': Template syntax error
-  ```
-
-- **Path Resolution Failures**: When nested path operations fail
-  ```
-  Failed to set nested path 'invalid.path': Cannot traverse non-dict value
-  ```
+- **Template Resolution Failures**: `"Template resolution failed in context 'abc123': Template syntax error"`
+- **Path Resolution Failures**: `"Failed to set nested path 'invalid.path': Cannot traverse non-dict value"`
+- **Parallel Operation Failures**: `"Parallel context operation failed: ValueError: Invalid operation"`
 
 ## Configuration Examples
 

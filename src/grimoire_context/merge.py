@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List
 from .exceptions import ContextMergeError
 from .logging import get_logger
 
-logger = get_logger(__name__)
+logger = get_logger("merge")
 
 if TYPE_CHECKING:
     from .context import GrimoireContext
@@ -176,6 +176,11 @@ class ContextMerger:
         if conflict_strategy not in ("error", "last_wins", "first_wins"):
             raise ContextMergeError(f"Invalid conflict strategy: {conflict_strategy}")
 
+        logger.debug(
+            f"Merging {len(contexts)} contexts with '{conflict_strategy}' "
+            "conflict strategy"
+        )
+
         base_context = contexts[0]
         merged_data = base_context._data
 
@@ -301,12 +306,21 @@ class ContextMerger:
                         result = future.result()
                         results.append(result)
                     except Exception as e:
+                        logger.error(
+                            f"Parallel context operation failed: "
+                            f"{type(e).__name__}: {e}"
+                        )
                         raise ContextMergeError(
                             f"Parallel operation failed: {e}"
                         ) from e
 
                 # Merge all results with base context knowledge
-                return ContextMerger.merge_contexts_with_base(results, base_context)
+                result = ContextMerger.merge_contexts_with_base(results, base_context)
+                logger.info(
+                    f"Successfully executed {len(operations)} parallel operations "
+                    "and merged results"
+                )
+                return result
 
         except Exception as e:
             if isinstance(e, ContextMergeError):
