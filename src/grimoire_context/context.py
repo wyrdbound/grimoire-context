@@ -32,7 +32,7 @@ from .path_resolver import (
 )
 from .protocols import TemplateResolver
 
-logger = get_logger(__name__)
+logger = get_logger("context")
 
 
 class GrimoireContext:
@@ -84,8 +84,15 @@ class GrimoireContext:
         # Hierarchical view (computed on-demand)
         self._chain_view: Optional[ChainMap] = None
 
-        # Log context creation as example of logging usage
+        # Log context creation
         data_len = len(self._data) if hasattr(self._data, "__len__") else 0
+        if not self._parent:
+            # Root context creation - INFO level
+            logger.info(
+                f"Grimoire Context system initialized with {data_len} initial variables"
+            )
+
+        # Debug level for detailed context tracking
         parent_info = " (with parent)" if self._parent else ""
         logger.debug(
             f"Created GrimoireContext '{self._id}' with {data_len} local keys"
@@ -222,6 +229,11 @@ class GrimoireContext:
         Returns:
             New GrimoireContext with all updates applied
         """
+        if len(updates) > 5:  # Log for bulk updates
+            logger.debug(
+                f"Bulk update of {len(updates)} variables in context '{self._id}'"
+            )
+
         new_data = self._data
         for key, value in updates.items():
             new_data = new_data.set(key, value)
@@ -251,6 +263,14 @@ class GrimoireContext:
             template_resolver=self._template_resolver,
             context_id=context_id,
         )
+
+        # Log child context creation
+        data_len = len(initial_data) if initial_data else 0
+        logger.debug(
+            f"Created child context '{child_context._id}' with {data_len} "
+            f"variables from parent '{self._id}'"
+        )
+
         return child_context
 
     # Path-based operations
@@ -280,7 +300,16 @@ class GrimoireContext:
         Returns:
             Value at the path or default
         """
-        return get_nested_path(dict(self.chain_view), path, default)
+        result = get_nested_path(dict(self.chain_view), path, default)
+
+        # Warn if returning default due to missing path (only if no explicit default)
+        if result is default and default is None and not self.has_variable(path):
+            logger.warning(
+                f"Requested variable '{path}' not found in context '{self._id}', "
+                "returning None"
+            )
+
+        return result
 
     def has_variable(self, path: str) -> bool:
         """Check if a variable exists at the given path.
@@ -348,6 +377,9 @@ class GrimoireContext:
         Returns:
             New GrimoireContext with the resolver set
         """
+        logger.debug(
+            f"Template resolver set for context '{self._id}': {type(resolver).__name__}"
+        )
         return GrimoireContext(self._data, self._parent, resolver, str(uuid4()))
 
     # Utility methods

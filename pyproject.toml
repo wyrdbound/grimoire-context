@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "grimoire-context"
-version = "0.0.1"
+version = "0.2.0"
 description = "Immutable, hierarchical context management for Grimoire"
 authors = [{name = "The Wyrd one", email = "wyrdbound@proton.me"}]
 license = {text = "MIT"}
@@ -23,6 +23,7 @@ classifiers = [
 ]
 dependencies = [
     "pyrsistent>=0.19.0",
+    "grimoire-logging>=0.1.0",
 ]
 
 [project.optional-dependencies]

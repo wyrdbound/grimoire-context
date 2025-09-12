@@ -25,11 +25,11 @@ from .exceptions import (
     PathResolutionError,
     TemplateError,
 )
-from .logging import LoggerProtocol, get_logger, inject_logger
+from .logging import LoggerProtocol, clear_logger_injection, get_logger, inject_logger
 from .merge import ContextMerger
 from .protocols import TemplateResolver
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 __author__ = "Grimoire Team"
 __email__ = "team@grimoire.com"
 
@@ -42,6 +42,7 @@ __all__ = [
     # Logging
     "get_logger",
     "inject_logger",
+    "clear_logger_injection",
     "LoggerProtocol",
     # Exceptions
     "GrimoireContextError",

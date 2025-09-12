@@ -6,12 +6,40 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.2.0] - 2025-09-12
+
+### Added
+
+- Integration with `grimoire-logging` package for flexible dependency injection logging
+- Strategic logging throughout the library:
+  - INFO-level logs for system initialization and successful parallel operations
+  - DEBUG-level logs for context operations, child creation, and path resolution
+  - WARNING-level logs for missing variables, path overwrites, and merge conflicts
+  - ERROR-level logs for template resolution failures and parallel operation errors
+- Comprehensive logging examples in `examples/` directory
+- Updated LOGGING.md with grimoire-context specific configuration guidance
+- Logger hierarchy with dedicated loggers for different subsystems
+- Comprehensive library examples demonstrating core functionality
+- Real-world usage patterns and integration examples
+- Consolidated logging example with practical scenarios
+
 ### Changed
+
+- Replaced custom logging implementation with `grimoire-logging` dependency
+- Updated all logging calls to use appropriate namespaces (`grimoire_context.*`)
+- Enhanced error reporting with more detailed context information
 - License changed from proprietary to MIT License
+- Reorganized examples directory to focus on library functionality rather than just logging
+- Improved example documentation and usage patterns
+
+### Dependencies
+
+- Added `grimoire-logging>=0.1.0` as a required dependency
 
 ## [0.0.1] - 2025-09-11
 
 ### Added
+
 - Initial release
 - Complete immutable context management system with structural sharing
 - Hierarchical context scoping with parent-child relationships
