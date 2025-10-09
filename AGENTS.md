@@ -12,7 +12,7 @@ Always remember the following points as you are working on this code base:
 
 5. Remember the purpose of this package is to provide its functionality in a clear and maintainable manner. Avoid adding special-cases or hack fixes simply to get around issues.
 
-6. Do NOT make bandaid fixes that break clean architecture guidelines. Always respect the architectural boundaries.
+6. Do NOT make band-aid fixes that break clean architecture guidelines. Always respect the architectural boundaries.
 
 7. After all code changes, run `source .venv/bin/activate && ruff format src/ tests/ && ruff check src/ tests/ --fix && mypy src/` to ensure code quality is retained in an iterative manner.
 
