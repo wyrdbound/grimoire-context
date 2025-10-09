@@ -221,19 +221,29 @@ class TestParallelNoneHandling:
         assert data["d"] == 4  # None overwritten with value
 
     def test_deep_merge_none_skipping(self):
-        """Test that _deep_merge_dicts skips None values."""
-        from grimoire_context.merge import _deep_merge_dicts
+        """Test that parallel execution skips None values during merge."""
+        # Start with a context that has None values in nested structure
+        ctx = GrimoireContext(
+            {"data": {"a": None, "b": None, "c": {"x": None, "y": None}}}
+        )
 
-        dict1 = {"a": 1, "b": 2, "c": {"x": 10, "y": 20}}
-        dict2 = {"a": None, "b": 3, "c": {"x": None, "y": 30, "z": 40}}
+        def set_a_and_cx(context):
+            # Sets data.a to 1 and data.c.x to 10
+            updated = context.set_variable("data.a", 1)
+            return updated.set_variable("data.c.x", 10)
 
-        result = _deep_merge_dicts(dict1, dict2)
+        def set_b_and_cy(context):
+            # Sets data.b to 2 and data.c.y to 20
+            updated = context.set_variable("data.b", 2)
+            return updated.set_variable("data.c.y", 20)
 
-        assert result["a"] == 1  # None in dict2 didn't overwrite
-        assert result["b"] == 3  # Non-None value overwrote
-        assert result["c"]["x"] == 10  # Nested None didn't overwrite
-        assert result["c"]["y"] == 30  # Nested non-None overwrote
-        assert result["c"]["z"] == 40  # New key added
+        result = ctx.execute_parallel([set_a_and_cx, set_b_and_cy])
+
+        # All values should be preserved - None values don't overwrite
+        assert result.get_variable("data.a") == 1  # Set by first operation
+        assert result.get_variable("data.b") == 2  # Set by second operation
+        assert result.get_variable("data.c.x") == 10  # Set by first operation
+        assert result.get_variable("data.c.y") == 20  # Set by second operation
 
     def test_parallel_none_in_new_nested_objects(self):
         """Test parallel operations creating new nested objects with None values."""
