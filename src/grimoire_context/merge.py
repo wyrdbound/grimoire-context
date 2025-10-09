@@ -82,10 +82,20 @@ def _paths_conflict(path1: str, path2: str) -> bool:
 
 
 def _deep_merge_dicts(dict1: Dict[str, Any], dict2: Dict[str, Any]) -> Dict[str, Any]:
-    """Deep merge two dictionaries, with dict2 values taking precedence."""
+    """Deep merge two dictionaries, with dict2 values taking precedence.
+
+    None values in dict2 are treated as "no change" and will not overwrite
+    existing values from dict1. This ensures parallel operations that set
+    different variables in the same nested object preserve all changes.
+    """
     result = dict1.copy()
     for key, value in dict2.items():
-        if key in result and isinstance(result[key], dict) and isinstance(value, dict):
+        if value is None:
+            # None means "no change" - don't overwrite existing value
+            continue
+        elif (
+            key in result and isinstance(result[key], dict) and isinstance(value, dict)
+        ):
             result[key] = _deep_merge_dicts(result[key], value)
         else:
             result[key] = value

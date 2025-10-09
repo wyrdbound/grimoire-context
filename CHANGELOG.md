@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+- **Parallel Execution Bug**: Fixed issue where `execute_parallel()` operations would lose changes when merging contexts containing `None` values. `None` values are now treated as "no change" during merge operations, preserving all parallel modifications. Use `discard()` or `delete_variable()` methods to explicitly remove values from contexts.
+
+### Changed  
+- **Merge Semantics**: `None` values in context merging are now treated as "no change" rather than explicit assignments, improving parallel execution behavior and semantic clarity.
+
 ## [0.2.0] - 2025-09-12
 
 ### Added
