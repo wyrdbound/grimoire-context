@@ -176,6 +176,100 @@ class TestParallelExecution:
             context.execute_parallel(operations)
 
 
+class TestParallelNoneHandling:
+    """Test None value handling in parallel execution."""
+
+    def test_parallel_none_preservation_issue_reproduction(self):
+        """Reproduce the exact bug from the issue."""
+        ctx = GrimoireContext(
+            {"variables": {"value1": None, "value2": None, "value3": None}}
+        )
+
+        def set_value1(context):
+            return context.set_variable("variables.value1", 10)
+
+        def set_value2(context):
+            return context.set_variable("variables.value2", 20)
+
+        def set_value3(context):
+            return context.set_variable("variables.value3", 30)
+
+        result = ctx.execute_parallel([set_value1, set_value2, set_value3])
+        variables = result.get_variable("variables")
+
+        # All values should be preserved, None values should not overwrite
+        assert variables["value1"] == 10
+        assert variables["value2"] == 20
+        assert variables["value3"] == 30
+
+    def test_parallel_mixed_none_and_values(self):
+        """Test parallel operations with mix of None and real values."""
+        ctx = GrimoireContext({"data": {"a": 1, "b": None, "c": 3, "d": None}})
+
+        def set_b(context):
+            return context.set_variable("data.b", 2)
+
+        def set_d(context):
+            return context.set_variable("data.d", 4)
+
+        result = ctx.execute_parallel([set_b, set_d])
+        data = result.get_variable("data")
+
+        assert data["a"] == 1  # Original value preserved
+        assert data["b"] == 2  # None overwritten with value
+        assert data["c"] == 3  # Original value preserved
+        assert data["d"] == 4  # None overwritten with value
+
+    def test_deep_merge_none_skipping(self):
+        """Test that _deep_merge_dicts skips None values."""
+        from grimoire_context.merge import _deep_merge_dicts
+
+        dict1 = {"a": 1, "b": 2, "c": {"x": 10, "y": 20}}
+        dict2 = {"a": None, "b": 3, "c": {"x": None, "y": 30, "z": 40}}
+
+        result = _deep_merge_dicts(dict1, dict2)
+
+        assert result["a"] == 1  # None in dict2 didn't overwrite
+        assert result["b"] == 3  # Non-None value overwrote
+        assert result["c"]["x"] == 10  # Nested None didn't overwrite
+        assert result["c"]["y"] == 30  # Nested non-None overwrote
+        assert result["c"]["z"] == 40  # New key added
+
+    def test_parallel_none_in_new_nested_objects(self):
+        """Test parallel operations creating new nested objects with None values."""
+        ctx = GrimoireContext({})
+
+        def add_stats(context):
+            return context.set_variable("stats", {"hp": 100, "mp": None})
+
+        def add_info(context):
+            return context.set_variable("info", {"name": "Test", "level": None})
+
+        result = ctx.execute_parallel([add_stats, add_info])
+
+        assert result.get_variable("stats.hp") == 100
+        assert result.get_variable("stats.mp") is None  # None is allowed in new data
+        assert result.get_variable("info.name") == "Test"
+        assert result.get_variable("info.level") is None
+
+    def test_parallel_empty_dict_values(self):
+        """Test that empty dicts are treated differently from None."""
+        ctx = GrimoireContext({"data": {"a": 1, "b": 2}})
+
+        def set_empty_dict(context):
+            return context.set_variable("data.c", {})
+
+        def set_value(context):
+            return context.set_variable("data.d", 4)
+
+        result = ctx.execute_parallel([set_empty_dict, set_value])
+
+        assert result.get_variable("data.a") == 1
+        assert result.get_variable("data.b") == 2
+        assert result.get_variable("data.c") == {}
+        assert result.get_variable("data.d") == 4
+
+
 class TestContextMerger:
     """Test ContextMerger class directly."""
 

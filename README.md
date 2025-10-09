@@ -126,6 +126,44 @@ print(result.get_variable('character.stats.dex'))  # Original + 2
 print(result.get_variable('character.hp'))         # 100
 ```
 
+#### Conflict Resolution and Merge Semantics
+
+When using `execute_parallel()`, GrimoireContext merges results using these semantics:
+
+- **None values**: Treated as "no change" - will not overwrite existing values
+- **Explicit removal**: Use `discard()` or `delete_variable()` to explicitly remove values
+- **Conflicts**: Operations modifying the same path will raise `ContextMergeError`
+- **Nested objects**: Deep merged recursively with the same semantics
+
+**Examples:**
+
+```python
+# ✓ This works - different variables in same object
+ctx = GrimoireContext({'stats': {'hp': None, 'mp': None}})
+
+def set_hp(ctx): 
+    return ctx.set_variable('stats.hp', 100)
+
+def set_mp(ctx): 
+    return ctx.set_variable('stats.mp', 50)
+
+result = ctx.execute_parallel([set_hp, set_mp])
+# Result: {'stats': {'hp': 100, 'mp': 50}} - Both values preserved
+
+# ✗ This raises error - same variable modified
+def set_hp_100(ctx): 
+    return ctx.set_variable('stats.hp', 100) 
+
+def set_hp_200(ctx): 
+    return ctx.set_variable('stats.hp', 200)
+
+ctx.execute_parallel([set_hp_100, set_hp_200])  # ContextMergeError
+
+# To explicitly remove a value, use delete methods
+def remove_hp(ctx): 
+    return ctx.delete_variable('stats.hp')
+```
+
 ### Template Resolution
 
 ```python
