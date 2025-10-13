@@ -29,9 +29,9 @@ from .logging import LoggerProtocol, clear_logger_injection, get_logger, inject_
 from .merge import ContextMerger
 from .protocols import TemplateResolver
 
-__version__ = "0.1.1"
-__author__ = "Grimoire Team"
-__email__ = "team@grimoire.com"
+__version__ = "0.3.1"
+__author__ = "The Wyrd One"
+__email__ = "wyrdbound@proton.me"
 
 __all__ = [
     # Main classes
