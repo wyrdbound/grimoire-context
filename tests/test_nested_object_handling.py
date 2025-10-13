@@ -1,6 +1,5 @@
 """Tests for nested path setting on non-dict objects."""
 
-
 from grimoire_context import GrimoireContext
 
 
