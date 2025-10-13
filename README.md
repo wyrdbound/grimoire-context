@@ -102,6 +102,40 @@ missing = context.get_variable('character.stats.con', 10)  # 10 (default)
 no_inventory = context.delete_variable('character.inventory')
 ```
 
+### Working with Custom Objects
+
+Grimoire Context supports setting nested paths on custom objects, not just dictionaries. The library intelligently handles different object types:
+
+```python
+class Character:
+    def __init__(self):
+        self.name = "Aragorn"
+        self.hp = 100
+        self.inventory = []
+
+# Store custom object in context
+character = Character()
+context = GrimoireContext({'player': character})
+
+# Set nested paths on the object - preserves object type and data
+updated = context.set_variable('player.hp', 85)
+updated = updated.set_variable('player.inventory', ['sword', 'shield'])
+
+# Object is preserved with updates
+player = updated.get_variable('player')
+print(type(player))           # <class 'Character'>
+print(player.name)            # "Aragorn" (preserved)
+print(player.hp)              # 85 (updated)
+print(player.inventory)       # ['sword', 'shield'] (updated)
+```
+
+**How it works:**
+- For objects with `__setitem__()` (dict-like), uses item assignment
+- For objects with attributes, uses `setattr()`
+- Maintains object type and all existing data
+- Creates deep copies to preserve immutability
+- Only converts to dict as a last resort with a warning
+
 ### Parallel Execution
 
 ```python

@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+
+- **Nested Path Setting on Objects**: Fixed critical issue where `set_variable()` with nested paths (e.g., `"object.property"`) would overwrite non-dict objects with empty dicts, losing all object data. The path resolver now intelligently handles custom objects:
+  - Tries `__setitem__()` first for dict-like objects
+  - Falls back to `setattr()` for objects with attributes  
+  - Only converts to dict as last resort with warning
+  - Preserves object types and all existing data
+  - Maintains immutability using deep copies
+  
+### Changed
+
+- **Path Resolution Enhancement**: `get_nested_path()` now supports attribute access on objects in addition to dict/PMap access, enabling seamless navigation through mixed dict/object hierarchies.
+
 ## [0.3.0] - 2025-10-08
 
 ### Fixed
