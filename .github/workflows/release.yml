@@ -1,8 +1,20 @@
 name: Release
 
+# The one publish path. Release Please opens a release PR on main; merging it
+# tags the version and creates the GitHub release, and release-please.yml then
+# dispatches this workflow for that tag. It can also be dispatched by hand for
+# an existing tag, and still runs for a release published by hand.
 on:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to publish (e.g. v0.3.1)"
+        required: true
+
+permissions:
+  contents: read
 
 jobs:
   test:
@@ -12,7 +24,11 @@ jobs:
         python-version: ["3.11", "3.12"]
 
     steps:
+      # A dispatch names its tag; a release event checks out the tag it was
+      # published for.
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag || github.ref }}
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v7
@@ -31,8 +47,23 @@ jobs:
   build-and-publish:
     needs: test
     runs-on: ubuntu-latest
+    # `environment` gates the job behind whatever reviewers or branch rules the
+    # pypi environment carries, and scopes the OIDC identity to that name.
+    environment: pypi
+    permissions:
+      # Trusted Publishing mints a short-lived OIDC token for this one job
+      # instead of keeping a long-lived PyPI API token in repository secrets.
+      # The publisher is registered at https://pypi.org/manage/account/publishing/
+      # for workflow `release.yml` and environment `pypi`, so this workflow must
+      # run on its own, never as a reusable workflow.
+      id-token: write
+      contents: read
     steps:
+      # A dispatch names its tag; a release event checks out the tag it was
+      # published for.
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag || github.ref }}
 
       - name: Set up Python
         uses: actions/setup-python@v7
@@ -44,6 +75,19 @@ jobs:
           python -m pip install --upgrade pip
           pip install build twine
 
+      # A tag on a commit whose pyproject.toml still names the previous version
+      # builds the previous version's files, which PyPI then refuses as
+      # duplicates. Stop before building instead.
+      - name: Check the tag matches the package version
+        env:
+          TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          version=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])")
+          if [ "v$version" != "$TAG" ]; then
+            echo "::error::Tag $TAG does not match the package version $version"
+            exit 1
+          fi
+
       - name: Build package
         run: |
           python -m build
@@ -53,8 +97,4 @@ jobs:
           twine check dist/*
 
       - name: Publish to PyPI
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
-        run: |
-          twine upload dist/*
+        uses: pypa/gh-action-pypi-publish@release/v1
