@@ -29,7 +29,7 @@ from .logging import LoggerProtocol, clear_logger_injection, get_logger, inject_
 from .merge import ContextMerger
 from .protocols import TemplateResolver
 
-__version__ = "0.3.1"
+__version__ = "0.3.1"  # x-release-please-version
 __author__ = "The Wyrd One"
 __email__ = "wyrdbound@proton.me"
 
